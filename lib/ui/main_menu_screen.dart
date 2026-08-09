@@ -22,6 +22,16 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         _ => AiDifficultyProfile.medium,
       };
 
+  /// Scales the label down to fit its segment instead of wrapping or
+  /// clipping when the segment is narrower than the text (e.g. "어려움"
+  /// in a 3-way segmented button at phone width).
+  Widget _segmentLabel(String text) {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(text, softWrap: false),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,10 +48,10 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 const SizedBox(height: 8),
                 SegmentedButton<int>(
                   showSelectedIcon: false,
-                  segments: const [
-                    ButtonSegment(value: 3, label: Text('3x3', softWrap: false)),
-                    ButtonSegment(value: 4, label: Text('4x4', softWrap: false)),
-                    ButtonSegment(value: 5, label: Text('5x5', softWrap: false)),
+                  segments: [
+                    ButtonSegment(value: 3, label: _segmentLabel('3x3')),
+                    ButtonSegment(value: 4, label: _segmentLabel('4x4')),
+                    ButtonSegment(value: 5, label: _segmentLabel('5x5')),
                   ],
                   selected: {_boardSize},
                   onSelectionChanged: (s) => setState(() => _boardSize = s.first),
@@ -51,10 +61,10 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 const SizedBox(height: 8),
                 SegmentedButton<String>(
                   showSelectedIcon: false,
-                  segments: const [
-                    ButtonSegment(value: 'Easy', label: Text('쉬움', softWrap: false)),
-                    ButtonSegment(value: 'Medium', label: Text('보통', softWrap: false)),
-                    ButtonSegment(value: 'Hard', label: Text('어려움', softWrap: false)),
+                  segments: [
+                    ButtonSegment(value: 'Easy', label: _segmentLabel('쉬움')),
+                    ButtonSegment(value: 'Medium', label: _segmentLabel('보통')),
+                    ButtonSegment(value: 'Hard', label: _segmentLabel('어려움')),
                   ],
                   selected: {_difficultyLabel},
                   onSelectionChanged: (s) =>
