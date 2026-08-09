@@ -102,7 +102,8 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
     });
     try {
       final uid = await _uidOrSignIn();
-      await _repo.joinQueue(uid: uid, size: widget.boardSize);
+      final styleName = widget.tileStyle.name;
+      await _repo.joinQueue(uid: uid, size: widget.boardSize, tileStyle: styleName);
 
       _watchSub = _repo.watchQueueMatch(uid).listen(
         (code) {
@@ -113,7 +114,11 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
 
       _queuePollTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
         try {
-          final code = await _repo.tryFindMatch(uid: uid, size: widget.boardSize);
+          final code = await _repo.tryFindMatch(
+            uid: uid,
+            size: widget.boardSize,
+            tileStyle: styleName,
+          );
           if (code != null) _goToMatch(code, uid);
         } catch (e) {
           _queuePollTimer?.cancel();
@@ -185,7 +190,8 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
       case _LobbyState.queued:
         return _WaitingPanel(
           title: '매칭 상대를 찾는 중...',
-          detail: '같은 보드 크기(${widget.boardSize}x${widget.boardSize})로\n'
+          detail: '같은 보드 크기(${widget.boardSize}x${widget.boardSize})·'
+              '같은 타일 모양(${widget.tileStyle == TileStyle.picture ? '그림' : '숫자'})으로\n'
               '대기 중인 상대와 자동으로 연결됩니다.',
           detailIsCode: false,
           onCancel: _cancel,

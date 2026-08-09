@@ -115,7 +115,16 @@ class _MatchScreenState extends State<MatchScreen> {
     final seconds = (elapsed.inSeconds % 60).toString().padLeft(2, '0');
 
     return Scaffold(
-      appBar: AppBar(title: Text('$minutes:$seconds')),
+      appBar: AppBar(
+        title: Text('$minutes:$seconds'),
+        actions: [
+          if (widget.tileStyle == TileStyle.picture)
+            const Padding(
+              padding: EdgeInsets.only(right: 12),
+              child: Center(child: PuzzlePreviewThumbnail(size: 40)),
+            ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -132,14 +141,7 @@ class _MatchScreenState extends State<MatchScreen> {
               color: Colors.blueAccent,
             ),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('이동 횟수: ${_playerSession.moveCount}'),
-                if (widget.tileStyle == TileStyle.picture)
-                  const PuzzlePreviewThumbnail(),
-              ],
-            ),
+            Text('이동 횟수: ${_playerSession.moveCount}'),
             const SizedBox(height: 16),
             Expanded(
               child: Center(

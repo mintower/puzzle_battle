@@ -99,11 +99,17 @@ class MatchRepository {
 
   /// Public matchmaking: joins the shared pool. Pair with [watchQueueMatch]
   /// (someone else finds us) and periodic [tryFindMatch] calls (we find
-  /// someone else) to actually get matched.
-  Future<void> joinQueue({required String uid, required int size}) {
+  /// someone else) to actually get matched. [tileStyle] is 'numbers' or
+  /// 'picture' — players are only paired within the same style.
+  Future<void> joinQueue({
+    required String uid,
+    required int size,
+    required String tileStyle,
+  }) {
     return _queue.doc(uid).set({
       'uid': uid,
       'size': size,
+      'tileStyle': tileStyle,
       'matchedRoomCode': null,
       'joinedAt': FieldValue.serverTimestamp(),
     });
@@ -119,12 +125,18 @@ class MatchRepository {
   }
 
   /// One attempt to find and pair with a waiting opponent of the same
-  /// board size. Safe to call repeatedly (e.g. every couple seconds)
-  /// while sitting in the queue. Returns the new room code if this call
-  /// made the match, `null` otherwise.
-  Future<String?> tryFindMatch({required String uid, required int size}) async {
+  /// board size *and* tile style (numbers only match numbers, picture
+  /// only matches picture). Safe to call repeatedly (e.g. every couple
+  /// seconds) while sitting in the queue. Returns the new room code if
+  /// this call made the match, `null` otherwise.
+  Future<String?> tryFindMatch({
+    required String uid,
+    required int size,
+    required String tileStyle,
+  }) async {
     final candidates = await _queue
         .where('size', isEqualTo: size)
+        .where('tileStyle', isEqualTo: tileStyle)
         .where('matchedRoomCode', isNull: true)
         .orderBy('joinedAt')
         .limit(5)
