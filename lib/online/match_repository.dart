@@ -129,15 +129,24 @@ class MatchRepository {
   /// only matches picture). Safe to call repeatedly (e.g. every couple
   /// seconds) while sitting in the queue. Returns the new room code if
   /// this call made the match, `null` otherwise.
+  ///
+  /// Ignores queue entries older than [staleAfter]: closing a browser tab
+  /// while queued never runs [leaveQueue] (there's no reliable app-side
+  /// hook for an abrupt tab close), so abandoned entries otherwise pile up
+  /// and — since results are ordered oldest-first — permanently block
+  /// real matches behind ghosts that no one is listening on anymore.
   Future<String?> tryFindMatch({
     required String uid,
     required int size,
     required String tileStyle,
+    Duration staleAfter = const Duration(minutes: 5),
   }) async {
+    final cutoff = Timestamp.fromDate(DateTime.now().subtract(staleAfter));
     final candidates = await _queue
         .where('size', isEqualTo: size)
         .where('tileStyle', isEqualTo: tileStyle)
         .where('matchedRoomCode', isNull: true)
+        .where('joinedAt', isGreaterThan: cutoff)
         .orderBy('joinedAt')
         .limit(5)
         .get();
