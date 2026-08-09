@@ -220,7 +220,7 @@ class _IdleForm extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (errorMessage != null) ...[
-          Text(errorMessage!, style: const TextStyle(color: Colors.red)),
+          SelectableText(errorMessage!, style: const TextStyle(color: Colors.red)),
           const SizedBox(height: 16),
         ],
         FilledButton(
