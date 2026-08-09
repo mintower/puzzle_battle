@@ -7,6 +7,7 @@ import '../online/match_repository.dart';
 import '../online/online_models.dart';
 import 'board_view.dart';
 import 'progress_row.dart';
+import 'puzzle_artwork.dart';
 import 'result_screen.dart';
 
 /// Live race against a real opponent, synced through Firestore. Both
@@ -161,7 +162,14 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
               color: Colors.blueAccent,
             ),
             const SizedBox(height: 16),
-            Text('이동 횟수: ${session.moveCount}'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('이동 횟수: ${session.moveCount}'),
+                if (widget.tileStyle == TileStyle.picture)
+                  const PuzzlePreviewThumbnail(),
+              ],
+            ),
             const SizedBox(height: 16),
             Expanded(
               child: Center(

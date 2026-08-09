@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../core/puzzle_session.dart';
 import 'board_view.dart';
+import 'puzzle_artwork.dart';
 import 'result_screen.dart';
 
 /// Solo mode: no AI, no race — just the puzzle, a timer, and a move
@@ -82,7 +83,14 @@ class _PracticeScreenState extends State<PracticeScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Text('이동 횟수: ${_session.moveCount}'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('이동 횟수: ${_session.moveCount}'),
+                if (widget.tileStyle == TileStyle.picture)
+                  const PuzzlePreviewThumbnail(),
+              ],
+            ),
             const SizedBox(height: 16),
             Expanded(
               child: Center(

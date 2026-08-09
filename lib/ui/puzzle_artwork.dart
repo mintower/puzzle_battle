@@ -54,3 +54,24 @@ class PuzzleArtworkPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+/// Small reference thumbnail of the complete picture, shown alongside the
+/// board in picture mode so players have something to solve toward —
+/// without it, a shuffled picture gives no clue which piece goes where.
+class PuzzlePreviewThumbnail extends StatelessWidget {
+  final double size;
+
+  const PuzzlePreviewThumbnail({super.key, this.size = 72});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: const CustomPaint(painter: PuzzleArtworkPainter()),
+      ),
+    );
+  }
+}

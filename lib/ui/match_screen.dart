@@ -7,6 +7,7 @@ import '../core/puzzle_match.dart';
 import '../core/puzzle_session.dart';
 import 'board_view.dart';
 import 'progress_row.dart';
+import 'puzzle_artwork.dart';
 import 'result_screen.dart';
 
 class MatchScreen extends StatefulWidget {
@@ -131,7 +132,14 @@ class _MatchScreenState extends State<MatchScreen> {
               color: Colors.blueAccent,
             ),
             const SizedBox(height: 16),
-            Text('이동 횟수: ${_playerSession.moveCount}'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('이동 횟수: ${_playerSession.moveCount}'),
+                if (widget.tileStyle == TileStyle.picture)
+                  const PuzzlePreviewThumbnail(),
+              ],
+            ),
             const SizedBox(height: 16),
             Expanded(
               child: Center(
