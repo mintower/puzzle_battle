@@ -58,9 +58,12 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
         _roomCode = code;
         _state = _LobbyState.waitingForGuest;
       });
-      _watchSub = _repo.watchRoom(code).listen((room) {
-        if (room.hasGuest) _goToMatch(code, uid);
-      });
+      _watchSub = _repo.watchRoom(code).listen(
+        (room) {
+          if (room.hasGuest) _goToMatch(code, uid);
+        },
+        onError: _showError,
+      );
     } catch (e) {
       _showError(e);
     }
@@ -91,13 +94,21 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
       final uid = await _uidOrSignIn();
       await _repo.joinQueue(uid: uid, size: widget.boardSize);
 
-      _watchSub = _repo.watchQueueMatch(uid).listen((code) {
-        if (code != null) _goToMatch(code, uid);
-      });
+      _watchSub = _repo.watchQueueMatch(uid).listen(
+        (code) {
+          if (code != null) _goToMatch(code, uid);
+        },
+        onError: _showError,
+      );
 
       _queuePollTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
-        final code = await _repo.tryFindMatch(uid: uid, size: widget.boardSize);
-        if (code != null) _goToMatch(code, uid);
+        try {
+          final code = await _repo.tryFindMatch(uid: uid, size: widget.boardSize);
+          if (code != null) _goToMatch(code, uid);
+        } catch (e) {
+          _queuePollTimer?.cancel();
+          _showError(e);
+        }
       });
     } catch (e) {
       _showError(e);
