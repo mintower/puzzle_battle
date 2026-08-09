@@ -90,15 +90,11 @@ class _MatchScreenState extends State<MatchScreen> {
           elapsed: elapsed,
           playerMoves: _playerSession.moveCount,
           aiMoves: _aiSession.moveCount,
-          onRematch: () {
-            Navigator.of(context).pushReplacement(MaterialPageRoute(
-              builder: (_) => MatchScreen(
-                boardSize: widget.boardSize,
-                difficulty: widget.difficulty,
-                tileStyle: widget.tileStyle,
-              ),
-            ));
-          },
+          onRematch: () => MatchScreen(
+            boardSize: widget.boardSize,
+            difficulty: widget.difficulty,
+            tileStyle: widget.tileStyle,
+          ),
         ),
       ));
     });

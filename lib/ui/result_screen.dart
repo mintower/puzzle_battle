@@ -11,10 +11,12 @@ class ResultScreen extends StatelessWidget {
   final int? aiMoves;
   final String? note;
 
-  /// When set, shows a rematch button. The caller decides what "rematch"
-  /// means (immediate restart for AI/practice, a mutual-vote handshake for
-  /// online) — this screen just triggers the callback.
-  final VoidCallback? onRematch;
+  /// When set, shows a rematch button that navigates to whatever screen
+  /// this builds. Takes a builder (not a bare navigation callback) so the
+  /// push happens with *this* screen's own BuildContext — a callback built
+  /// back in the previous (now-disposed) screen would capture a context
+  /// that's no longer valid by the time the button is actually tapped.
+  final Widget Function()? onRematch;
 
   const ResultScreen({
     super.key,
@@ -50,7 +52,11 @@ class ResultScreen extends StatelessWidget {
             const SizedBox(height: 32),
             if (onRematch != null) ...[
               FilledButton(
-                onPressed: onRematch,
+                onPressed: () {
+                  Navigator.of(context).pushReplacement(MaterialPageRoute(
+                    builder: (_) => onRematch!(),
+                  ));
+                },
                 child: const Text('다시하기'),
               ),
               const SizedBox(height: 12),

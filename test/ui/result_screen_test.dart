@@ -79,20 +79,24 @@ void main() {
     expect(find.text('메인으로'), findsOneWidget);
   });
 
-  testWidgets('ResultScreen with onRematch shows the button and calls back',
+  testWidgets(
+      'ResultScreen with onRematch navigates to the returned screen using '
+      'its own context (regression: a bare VoidCallback built by the '
+      'previous, now-disposed screen silently failed to navigate)',
       (tester) async {
-    var tapped = false;
     await tester.pumpWidget(MaterialApp(
       home: ResultScreen(
         playerWon: true,
         elapsed: const Duration(seconds: 1),
         playerMoves: 1,
-        onRematch: () => tapped = true,
+        onRematch: () => const Scaffold(body: Text('rematch-screen')),
       ),
     ));
 
     expect(find.text('다시하기'), findsOneWidget);
     await tester.tap(find.text('다시하기'));
-    expect(tapped, isTrue);
+    await tester.pumpAndSettle();
+
+    expect(find.text('rematch-screen'), findsOneWidget);
   });
 }

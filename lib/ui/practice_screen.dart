@@ -62,14 +62,10 @@ class _PracticeScreenState extends State<PracticeScreen> {
             solo: true,
             elapsed: elapsed,
             playerMoves: moves,
-            onRematch: () {
-              Navigator.of(context).pushReplacement(MaterialPageRoute(
-                builder: (_) => PracticeScreen(
-                  boardSize: widget.boardSize,
-                  tileStyle: widget.tileStyle,
-                ),
-              ));
-            },
+            onRematch: () => PracticeScreen(
+              boardSize: widget.boardSize,
+              tileStyle: widget.tileStyle,
+            ),
           ),
         ));
       });

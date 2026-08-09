@@ -139,16 +139,12 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
           elapsed: elapsed,
           playerMoves: myMoves,
           note: note,
-          onRematch: () {
-            Navigator.of(context).pushReplacement(MaterialPageRoute(
-              builder: (_) => OnlineRematchWaitingScreen(
-                roomCode: widget.roomCode,
-                myUid: widget.myUid,
-                tileStyle: widget.tileStyle,
-                nickname: widget.nickname,
-              ),
-            ));
-          },
+          onRematch: () => OnlineRematchWaitingScreen(
+            roomCode: widget.roomCode,
+            myUid: widget.myUid,
+            tileStyle: widget.tileStyle,
+            nickname: widget.nickname,
+          ),
         ),
       ));
     });
