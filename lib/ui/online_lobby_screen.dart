@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../online/match_repository.dart';
+import 'board_view.dart';
 import 'online_match_screen.dart';
 
 enum _LobbyState { idle, creatingRoom, waitingForGuest, joiningRoom, queued, error }
@@ -12,8 +13,13 @@ enum _LobbyState { idle, creatingRoom, waitingForGuest, joiningRoom, queued, err
 /// to be paired with whoever else is waiting.
 class OnlineLobbyScreen extends StatefulWidget {
   final int boardSize;
+  final TileStyle tileStyle;
 
-  const OnlineLobbyScreen({super.key, required this.boardSize});
+  const OnlineLobbyScreen({
+    super.key,
+    required this.boardSize,
+    this.tileStyle = TileStyle.numbers,
+  });
 
   @override
   State<OnlineLobbyScreen> createState() => _OnlineLobbyScreenState();
@@ -41,7 +47,11 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
     _watchSub?.cancel();
     _queuePollTimer?.cancel();
     Navigator.of(context).pushReplacement(MaterialPageRoute(
-      builder: (_) => OnlineMatchScreen(roomCode: code, myUid: uid),
+      builder: (_) => OnlineMatchScreen(
+        roomCode: code,
+        myUid: uid,
+        tileStyle: widget.tileStyle,
+      ),
     ));
   }
 

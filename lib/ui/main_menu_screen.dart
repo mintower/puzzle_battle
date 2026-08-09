@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/ai_opponent.dart';
+import 'board_view.dart';
 import 'match_screen.dart';
 import 'online_lobby_screen.dart';
 import 'practice_screen.dart';
@@ -15,6 +16,7 @@ class MainMenuScreen extends StatefulWidget {
 class _MainMenuScreenState extends State<MainMenuScreen> {
   int _boardSize = 3;
   String _difficultyLabel = 'Medium';
+  TileStyle _tileStyle = TileStyle.numbers;
 
   AiDifficultyProfile get _difficulty => switch (_difficultyLabel) {
         'Easy' => AiDifficultyProfile.easy,
@@ -57,6 +59,18 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   onSelectionChanged: (s) => setState(() => _boardSize = s.first),
                 ),
                 const SizedBox(height: 24),
+                const Text('타일 모양', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                SegmentedButton<TileStyle>(
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(value: TileStyle.numbers, label: _segmentLabel('숫자')),
+                    ButtonSegment(value: TileStyle.picture, label: _segmentLabel('그림')),
+                  ],
+                  selected: {_tileStyle},
+                  onSelectionChanged: (s) => setState(() => _tileStyle = s.first),
+                ),
+                const SizedBox(height: 24),
                 const Text('AI 난이도', style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 SegmentedButton<String>(
@@ -77,6 +91,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                       builder: (_) => MatchScreen(
                         boardSize: _boardSize,
                         difficulty: _difficulty,
+                        tileStyle: _tileStyle,
                       ),
                     ));
                   },
@@ -86,7 +101,10 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 OutlinedButton(
                   onPressed: () {
                     Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => PracticeScreen(boardSize: _boardSize),
+                      builder: (_) => PracticeScreen(
+                        boardSize: _boardSize,
+                        tileStyle: _tileStyle,
+                      ),
                     ));
                   },
                   child: const Text('연습 모드 (혼자 풀기)'),
@@ -95,7 +113,10 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 OutlinedButton(
                   onPressed: () {
                     Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => OnlineLobbyScreen(boardSize: _boardSize),
+                      builder: (_) => OnlineLobbyScreen(
+                        boardSize: _boardSize,
+                        tileStyle: _tileStyle,
+                      ),
                     ));
                   },
                   child: const Text('실시간 온라인 대전'),

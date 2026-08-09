@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../core/puzzle_board.dart';
+import 'puzzle_artwork.dart';
+
+/// Whether tiles show their number or a slice of a picture that
+/// reassembles as the puzzle is solved.
+enum TileStyle { numbers, picture }
 
 /// Renders a [PuzzleBoard] as a grid of sliding tiles. Each tile is keyed
 /// by its value (not its position), so Flutter's implicit animations
@@ -9,12 +14,14 @@ class BoardView extends StatelessWidget {
   final PuzzleBoard board;
   final ValueChanged<int>? onTileTap;
   final Color? tileColor;
+  final TileStyle tileStyle;
 
   const BoardView({
     super.key,
     required this.board,
     this.onTileTap,
     this.tileColor,
+    this.tileStyle = TileStyle.numbers,
   });
 
   @override
@@ -43,21 +50,12 @@ class BoardView extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(3),
                 child: Material(
-                  color: color,
+                  color: tileStyle == TileStyle.picture ? Colors.transparent : color,
                   borderRadius: BorderRadius.circular(8),
+                  clipBehavior: Clip.antiAlias,
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(8),
                     onTap: onTileTap == null ? null : () => onTileTap!(index),
-                    child: Center(
-                      child: Text(
-                        '$value',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                    child: _tileContent(value, boardSide, tileSide),
                   ),
                 ),
               ),
@@ -81,6 +79,44 @@ class BoardView extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _tileContent(int value, double boardSide, double tileSide) {
+    if (tileStyle == TileStyle.numbers) {
+      return Center(
+        child: Text(
+          '$value',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    // Picture mode: each tile shows the slice of one shared painting that
+    // corresponds to its *solved* position, so the picture reassembles as
+    // the puzzle is completed regardless of where the tile sits now.
+    final goalIndex = value - 1;
+    final goalRow = goalIndex ~/ board.size;
+    final goalCol = goalIndex % board.size;
+
+    return ClipRect(
+      child: OverflowBox(
+        maxWidth: boardSide,
+        maxHeight: boardSide,
+        alignment: Alignment.topLeft,
+        child: Transform.translate(
+          offset: Offset(-goalCol * tileSide, -goalRow * tileSide),
+          child: SizedBox(
+            width: boardSide,
+            height: boardSide,
+            child: const CustomPaint(painter: PuzzleArtworkPainter()),
+          ),
+        ),
+      ),
     );
   }
 }

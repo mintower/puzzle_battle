@@ -10,8 +10,13 @@ import 'result_screen.dart';
 /// counter, for getting a feel for the sliding mechanic.
 class PracticeScreen extends StatefulWidget {
   final int boardSize;
+  final TileStyle tileStyle;
 
-  const PracticeScreen({super.key, required this.boardSize});
+  const PracticeScreen({
+    super.key,
+    required this.boardSize,
+    this.tileStyle = TileStyle.numbers,
+  });
 
   @override
   State<PracticeScreen> createState() => _PracticeScreenState();
@@ -83,7 +88,11 @@ class _PracticeScreenState extends State<PracticeScreen> {
               child: Center(
                 child: AspectRatio(
                   aspectRatio: 1,
-                  child: BoardView(board: _session.board, onTileTap: _handleTileTap),
+                  child: BoardView(
+                    board: _session.board,
+                    onTileTap: _handleTileTap,
+                    tileStyle: widget.tileStyle,
+                  ),
                 ),
               ),
             ),

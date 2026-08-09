@@ -12,11 +12,13 @@ import 'result_screen.dart';
 class MatchScreen extends StatefulWidget {
   final int boardSize;
   final AiDifficultyProfile difficulty;
+  final TileStyle tileStyle;
 
   const MatchScreen({
     super.key,
     required this.boardSize,
     required this.difficulty,
+    this.tileStyle = TileStyle.numbers,
   });
 
   @override
@@ -138,6 +140,7 @@ class _MatchScreenState extends State<MatchScreen> {
                   child: BoardView(
                     board: _playerSession.board,
                     onTileTap: _handleTileTap,
+                    tileStyle: widget.tileStyle,
                   ),
                 ),
               ),

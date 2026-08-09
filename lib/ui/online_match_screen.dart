@@ -17,11 +17,13 @@ import 'result_screen.dart';
 class OnlineMatchScreen extends StatefulWidget {
   final String roomCode;
   final String myUid;
+  final TileStyle tileStyle;
 
   const OnlineMatchScreen({
     super.key,
     required this.roomCode,
     required this.myUid,
+    this.tileStyle = TileStyle.numbers,
   });
 
   @override
@@ -165,7 +167,11 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
               child: Center(
                 child: AspectRatio(
                   aspectRatio: 1,
-                  child: BoardView(board: session.board, onTileTap: _handleTileTap),
+                  child: BoardView(
+                    board: session.board,
+                    onTileTap: _handleTileTap,
+                    tileStyle: widget.tileStyle,
+                  ),
                 ),
               ),
             ),

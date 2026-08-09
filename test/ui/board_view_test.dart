@@ -35,4 +35,33 @@ void main() {
 
     expect(tappedIndex, 8);
   });
+
+  testWidgets(
+      'in picture mode, tiles show artwork slices instead of numbers, and taps still report position',
+      (tester) async {
+    final board = PuzzleBoard(size: 3, tiles: [1, 2, 3, 4, 5, 6, 7, 0, 8]);
+    int? tappedIndex;
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SizedBox(
+          width: 300,
+          height: 300,
+          child: BoardView(
+            board: board,
+            tileStyle: TileStyle.picture,
+            onTileTap: (index) => tappedIndex = index,
+          ),
+        ),
+      ),
+    ));
+
+    expect(find.text('1'), findsNothing);
+    expect(find.byType(CustomPaint), findsWidgets);
+
+    await tester.tapAt(const Offset(280, 280)); // tile '8' at index 8
+    await tester.pump();
+
+    expect(tappedIndex, 8);
+  });
 }
