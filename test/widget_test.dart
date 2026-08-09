@@ -13,6 +13,7 @@ void main() {
     expect(find.text('AI와 대전 시작'), findsOneWidget);
     expect(find.text('3x3'), findsOneWidget);
     expect(find.text('4x4'), findsOneWidget);
+    expect(find.text('5x5'), findsOneWidget);
   });
 
   testWidgets('Tapping start navigates to the match screen', (tester) async {
