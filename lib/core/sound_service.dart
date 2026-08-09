@@ -11,6 +11,7 @@ class SoundService {
   static Future<void> _play(String assetFile) async {
     try {
       final player = AudioPlayer();
+      await player.setVolume(1.0);
       await player.play(AssetSource('sounds/$assetFile'));
       player.onPlayerComplete.first.then((_) => player.dispose());
     } catch (_) {
