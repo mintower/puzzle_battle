@@ -64,4 +64,35 @@ void main() {
     expect(find.text('승리!'), findsOneWidget);
     expect(find.text('상대가 나가서 승리했습니다.'), findsOneWidget);
   });
+
+  testWidgets('ResultScreen without onRematch hides the rematch button',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: ResultScreen(
+        playerWon: true,
+        elapsed: Duration(seconds: 1),
+        playerMoves: 1,
+      ),
+    ));
+
+    expect(find.text('다시하기'), findsNothing);
+    expect(find.text('메인으로'), findsOneWidget);
+  });
+
+  testWidgets('ResultScreen with onRematch shows the button and calls back',
+      (tester) async {
+    var tapped = false;
+    await tester.pumpWidget(MaterialApp(
+      home: ResultScreen(
+        playerWon: true,
+        elapsed: const Duration(seconds: 1),
+        playerMoves: 1,
+        onRematch: () => tapped = true,
+      ),
+    ));
+
+    expect(find.text('다시하기'), findsOneWidget);
+    await tester.tap(find.text('다시하기'));
+    expect(tapped, isTrue);
+  });
 }

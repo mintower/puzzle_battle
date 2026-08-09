@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../core/ai_opponent.dart';
 import '../core/puzzle_match.dart';
 import '../core/puzzle_session.dart';
+import '../core/sound_service.dart';
 import 'board_view.dart';
 import 'progress_row.dart';
 import 'puzzle_artwork.dart';
@@ -67,6 +68,7 @@ class _MatchScreenState extends State<MatchScreen> {
     if (_match.isOver) return;
     final applied = _playerSession.tryMove(tileIndex);
     if (applied) {
+      SoundService.playMove();
       setState(() {});
       _checkForMatchEnd();
     }
@@ -79,6 +81,7 @@ class _MatchScreenState extends State<MatchScreen> {
     _tickTimer?.cancel();
     final elapsed = _stopwatch.elapsed;
     final playerWon = _match.result == MatchResult.playerWon;
+    playerWon ? SoundService.playWin() : SoundService.playLose();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(MaterialPageRoute(
@@ -87,6 +90,15 @@ class _MatchScreenState extends State<MatchScreen> {
           elapsed: elapsed,
           playerMoves: _playerSession.moveCount,
           aiMoves: _aiSession.moveCount,
+          onRematch: () {
+            Navigator.of(context).pushReplacement(MaterialPageRoute(
+              builder: (_) => MatchScreen(
+                boardSize: widget.boardSize,
+                difficulty: widget.difficulty,
+                tileStyle: widget.tileStyle,
+              ),
+            ));
+          },
         ),
       ));
     });

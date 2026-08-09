@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../core/puzzle_session.dart';
+import '../core/sound_service.dart';
 import '../online/match_repository.dart';
 import '../online/online_models.dart';
 import 'board_view.dart';
+import 'online_rematch_waiting_screen.dart';
 import 'progress_row.dart';
 import 'puzzle_artwork.dart';
 import 'result_screen.dart';
@@ -19,12 +21,14 @@ class OnlineMatchScreen extends StatefulWidget {
   final String roomCode;
   final String myUid;
   final TileStyle tileStyle;
+  final String nickname;
 
   const OnlineMatchScreen({
     super.key,
     required this.roomCode,
     required this.myUid,
     this.tileStyle = TileStyle.numbers,
+    this.nickname = '플레이어',
   });
 
   @override
@@ -96,6 +100,7 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
     final session = _session;
     if (session == null || _navigatedToResult) return;
     if (!session.tryMove(tileIndex)) return;
+    SoundService.playMove();
     setState(() {});
 
     final tiles = session.board.tiles;
@@ -123,6 +128,7 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
     _stopwatch.stop();
     _tickTimer?.cancel();
     _heartbeatTimer?.cancel();
+    playerWon ? SoundService.playWin() : SoundService.playLose();
     final elapsed = _stopwatch.elapsed;
     final myMoves = _session?.moveCount ?? 0;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -133,6 +139,16 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
           elapsed: elapsed,
           playerMoves: myMoves,
           note: note,
+          onRematch: () {
+            Navigator.of(context).pushReplacement(MaterialPageRoute(
+              builder: (_) => OnlineRematchWaitingScreen(
+                roomCode: widget.roomCode,
+                myUid: widget.myUid,
+                tileStyle: widget.tileStyle,
+                nickname: widget.nickname,
+              ),
+            ));
+          },
         ),
       ));
     });
@@ -169,6 +185,9 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
         ? null
         : room.progress[opponentUid]) ??
         const PlayerProgress(correct: 0, total: 1, finished: false);
+    final opponentName =
+        opponentUid == null ? '상대' : room.nameFor(opponentUid, fallback: '상대');
+    final myName = room.nameFor(widget.myUid, fallback: '나');
 
     final elapsed = _stopwatch.elapsed;
     final minutes = elapsed.inMinutes.toString().padLeft(2, '0');
@@ -190,13 +209,13 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
         child: Column(
           children: [
             ProgressRow(
-              label: '상대',
+              label: opponentName,
               progress: opponentProgress.ratio,
               color: Colors.redAccent,
             ),
             const SizedBox(height: 8),
             ProgressRow(
-              label: '나',
+              label: myName,
               progress: _myProgress(session),
               color: Colors.blueAccent,
             ),

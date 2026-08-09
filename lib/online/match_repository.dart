@@ -29,7 +29,11 @@ class MatchRepository {
 
   /// Creates a room with a short, human-typeable code. Retries on the rare
   /// chance of a code collision.
-  Future<String> createRoom({required int size, required String hostUid}) async {
+  Future<String> createRoom({
+    required int size,
+    required String hostUid,
+    required String hostNickname,
+  }) async {
     final random = Random();
     for (var attempt = 0; attempt < 8; attempt++) {
       final code = (1000 + random.nextInt(9000)).toString();
@@ -44,6 +48,9 @@ class MatchRepository {
           'guestUid': null,
           'status': 'waiting',
           'progress': <String, dynamic>{},
+          'names': {hostUid: hostNickname},
+          'round': 0,
+          'rematchVotes': <String, dynamic>{},
           'createdAt': FieldValue.serverTimestamp(),
         });
         return true;
@@ -55,7 +62,11 @@ class MatchRepository {
 
   /// Joins an existing waiting room. Throws if the code doesn't exist or
   /// is already full.
-  Future<void> joinRoom({required String code, required String guestUid}) {
+  Future<void> joinRoom({
+    required String code,
+    required String guestUid,
+    required String guestNickname,
+  }) {
     final doc = _rooms.doc(code);
     return _db.runTransaction((tx) async {
       final snapshot = await tx.get(doc);
@@ -69,7 +80,11 @@ class MatchRepository {
       if (data['hostUid'] == guestUid) {
         throw StateError('자기 자신이 만든 방에는 들어갈 수 없습니다.');
       }
-      tx.update(doc, {'guestUid': guestUid, 'status': 'active'});
+      tx.update(doc, {
+        'guestUid': guestUid,
+        'status': 'active',
+        'names.$guestUid': guestNickname,
+      });
     });
   }
 
@@ -113,11 +128,13 @@ class MatchRepository {
     required String uid,
     required int size,
     required String tileStyle,
+    required String nickname,
   }) {
     return _queue.doc(uid).set({
       'uid': uid,
       'size': size,
       'tileStyle': tileStyle,
+      'nickname': nickname,
       'matchedRoomCode': null,
       'joinedAt': FieldValue.serverTimestamp(),
     });
@@ -147,6 +164,7 @@ class MatchRepository {
     required String uid,
     required int size,
     required String tileStyle,
+    required String nickname,
     Duration staleAfter = const Duration(minutes: 5),
   }) async {
     final cutoff = Timestamp.fromDate(DateTime.now().subtract(staleAfter));
@@ -169,6 +187,8 @@ class MatchRepository {
         if (theirs.data()?['matchedRoomCode'] != null) return null;
 
         final code = (1000000 + Random().nextInt(8999999)).toString();
+        final candidateNickname =
+            theirs.data()?['nickname'] as String? ?? '상대';
         tx.set(_rooms.doc(code), {
           'size': size,
           'seed': Random().nextInt(1 << 31),
@@ -176,6 +196,9 @@ class MatchRepository {
           'guestUid': candidate.id,
           'status': 'active',
           'progress': <String, dynamic>{},
+          'names': {uid: nickname, candidate.id: candidateNickname},
+          'round': 0,
+          'rematchVotes': <String, dynamic>{},
           'createdAt': FieldValue.serverTimestamp(),
         });
         tx.update(_queue.doc(uid), {'matchedRoomCode': code});
@@ -185,5 +208,41 @@ class MatchRepository {
       if (roomCode != null) return roomCode;
     }
     return null;
+  }
+
+  /// Records my vote to play another round in the same room.
+  Future<void> voteRematch({required String code, required String uid}) {
+    return _rooms.doc(code).update({'rematchVotes.$uid': true});
+  }
+
+  Future<void> clearRematchVote({required String code, required String uid}) {
+    return _rooms.doc(code).update({'rematchVotes.$uid': FieldValue.delete()});
+  }
+
+  /// If both [hostUid] and [guestUid] have voted to rematch, starts a new
+  /// round: fresh seed, cleared progress, votes reset, [OnlineRoom.round]
+  /// bumped so both clients' listeners notice. Safe to call from both
+  /// clients whenever the room doc changes — the transaction re-checks
+  /// the votes are still both true, so only one call actually resets it.
+  Future<void> resolveRematchIfReady({
+    required String code,
+    required String hostUid,
+    required String guestUid,
+  }) {
+    final doc = _rooms.doc(code);
+    return _db.runTransaction((tx) async {
+      final snapshot = await tx.get(doc);
+      final data = snapshot.data();
+      if (data == null) return;
+      final votes = (data['rematchVotes'] as Map<String, dynamic>?) ?? const {};
+      if (votes[hostUid] == true && votes[guestUid] == true) {
+        tx.update(doc, {
+          'seed': Random().nextInt(1 << 31),
+          'progress': <String, dynamic>{},
+          'rematchVotes': <String, dynamic>{},
+          'round': FieldValue.increment(1),
+        });
+      }
+    });
   }
 }

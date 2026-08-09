@@ -14,11 +14,13 @@ enum _LobbyState { idle, creatingRoom, waitingForGuest, joiningRoom, queued, err
 class OnlineLobbyScreen extends StatefulWidget {
   final int boardSize;
   final TileStyle tileStyle;
+  final String nickname;
 
   const OnlineLobbyScreen({
     super.key,
     required this.boardSize,
     this.tileStyle = TileStyle.numbers,
+    this.nickname = '플레이어',
   });
 
   @override
@@ -51,6 +53,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
         roomCode: code,
         myUid: uid,
         tileStyle: widget.tileStyle,
+        nickname: widget.nickname,
       ),
     ));
   }
@@ -62,7 +65,11 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
     });
     try {
       final uid = await _uidOrSignIn();
-      final code = await _repo.createRoom(size: widget.boardSize, hostUid: uid);
+      final code = await _repo.createRoom(
+        size: widget.boardSize,
+        hostUid: uid,
+        hostNickname: widget.nickname,
+      );
       if (!mounted) return;
       setState(() {
         _roomCode = code;
@@ -88,7 +95,11 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
     });
     try {
       final uid = await _uidOrSignIn();
-      await _repo.joinRoom(code: code, guestUid: uid);
+      await _repo.joinRoom(
+        code: code,
+        guestUid: uid,
+        guestNickname: widget.nickname,
+      );
       _goToMatch(code, uid);
     } catch (e) {
       _showError(e);
@@ -103,7 +114,12 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
     try {
       final uid = await _uidOrSignIn();
       final styleName = widget.tileStyle.name;
-      await _repo.joinQueue(uid: uid, size: widget.boardSize, tileStyle: styleName);
+      await _repo.joinQueue(
+        uid: uid,
+        size: widget.boardSize,
+        tileStyle: styleName,
+        nickname: widget.nickname,
+      );
 
       _watchSub = _repo.watchQueueMatch(uid).listen(
         (code) {
@@ -118,6 +134,7 @@ class _OnlineLobbyScreenState extends State<OnlineLobbyScreen> {
             uid: uid,
             size: widget.boardSize,
             tileStyle: styleName,
+            nickname: widget.nickname,
           );
           if (code != null) _goToMatch(code, uid);
         } catch (e) {

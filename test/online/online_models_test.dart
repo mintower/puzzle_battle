@@ -64,5 +64,28 @@ void main() {
       expect(room.progress['host-uid']!.ratio, 0.25);
       expect(room.progress.containsKey('guest-uid'), isFalse);
     });
+
+    test('round and names default sensibly when absent from older rooms',
+        () {
+      final room = buildRoom(guestUid: 'guest-uid');
+      expect(room.round, 0);
+      expect(room.nameFor('host-uid', fallback: '나'), '나');
+    });
+
+    test('parses names and round when present', () {
+      final room = OnlineRoom.fromMap('1234', {
+        'size': 3,
+        'seed': 42,
+        'hostUid': 'host-uid',
+        'guestUid': 'guest-uid',
+        'status': 'active',
+        'progress': <String, dynamic>{},
+        'names': {'host-uid': '민토', 'guest-uid': '친구'},
+        'round': 2,
+      });
+      expect(room.nameFor('host-uid'), '민토');
+      expect(room.nameFor('guest-uid'), '친구');
+      expect(room.round, 2);
+    });
   });
 }

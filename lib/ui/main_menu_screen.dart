@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/ai_opponent.dart';
+import '../core/nickname_service.dart';
 import 'board_view.dart';
 import 'match_screen.dart';
 import 'online_lobby_screen.dart';
@@ -17,12 +18,33 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   int _boardSize = 3;
   String _difficultyLabel = 'Medium';
   TileStyle _tileStyle = TileStyle.numbers;
+  final _nicknameController = TextEditingController();
 
   AiDifficultyProfile get _difficulty => switch (_difficultyLabel) {
         'Easy' => AiDifficultyProfile.easy,
         'Hard' => AiDifficultyProfile.hard,
         _ => AiDifficultyProfile.medium,
       };
+
+  @override
+  void initState() {
+    super.initState();
+    NicknameService.getOrCreate().then((name) {
+      if (!mounted) return;
+      setState(() => _nicknameController.text = name);
+    });
+  }
+
+  @override
+  void dispose() {
+    _nicknameController.dispose();
+    super.dispose();
+  }
+
+  String get _nickname {
+    final trimmed = _nicknameController.text.trim();
+    return trimmed.isEmpty ? '플레이어' : trimmed;
+  }
 
   /// Scales the label down to fit its segment instead of wrapping or
   /// clipping when the segment is narrower than the text (e.g. "어려움"
@@ -41,11 +63,24 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 360),
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                const Text('닉네임', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _nicknameController,
+                  maxLength: 12,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    counterText: '',
+                    hintText: '온라인 대전에서 표시될 이름',
+                  ),
+                  onChanged: (value) => NicknameService.setNickname(value),
+                ),
+                const SizedBox(height: 16),
                 const Text('보드 크기', style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 SegmentedButton<int>(
@@ -116,6 +151,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                       builder: (_) => OnlineLobbyScreen(
                         boardSize: _boardSize,
                         tileStyle: _tileStyle,
+                        nickname: _nickname,
                       ),
                     ));
                   },

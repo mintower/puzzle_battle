@@ -18,7 +18,10 @@ class ProgressRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        SizedBox(width: 32, child: Text(label)),
+        SizedBox(
+          width: 72,
+          child: Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
+        ),
         Expanded(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(6),

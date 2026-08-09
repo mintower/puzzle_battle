@@ -11,6 +11,11 @@ class ResultScreen extends StatelessWidget {
   final int? aiMoves;
   final String? note;
 
+  /// When set, shows a rematch button. The caller decides what "rematch"
+  /// means (immediate restart for AI/practice, a mutual-vote handshake for
+  /// online) — this screen just triggers the callback.
+  final VoidCallback? onRematch;
+
   const ResultScreen({
     super.key,
     this.solo = false,
@@ -19,6 +24,7 @@ class ResultScreen extends StatelessWidget {
     required this.playerMoves,
     this.aiMoves,
     this.note,
+    this.onRematch,
   });
 
   @override
@@ -42,7 +48,14 @@ class ResultScreen extends StatelessWidget {
             Text(solo ? '이동 횟수: $playerMoves' : '내 이동 횟수: $playerMoves'),
             if (aiMoves != null) Text('AI 이동 횟수: $aiMoves'),
             const SizedBox(height: 32),
-            FilledButton(
+            if (onRematch != null) ...[
+              FilledButton(
+                onPressed: onRematch,
+                child: const Text('다시하기'),
+              ),
+              const SizedBox(height: 12),
+            ],
+            OutlinedButton(
               onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
               child: const Text('메인으로'),
             ),

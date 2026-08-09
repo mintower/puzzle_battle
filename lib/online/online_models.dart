@@ -48,6 +48,17 @@ class OnlineRoom {
   /// (closed the tab) without the app getting a chance to signal it.
   final Map<String, DateTime> presence;
 
+  /// Display nickname per uid, set when a player creates/joins/matches
+  /// into the room.
+  final Map<String, String> names;
+
+  /// Bumped each time both players vote to rematch — clients watch for
+  /// this to know a fresh round has started in the same room.
+  final int round;
+
+  /// Which uids have voted to rematch for the *next* round.
+  final Map<String, bool> rematchVotes;
+
   const OnlineRoom({
     required this.code,
     required this.size,
@@ -57,6 +68,9 @@ class OnlineRoom {
     required this.status,
     required this.progress,
     required this.presence,
+    required this.names,
+    required this.round,
+    required this.rematchVotes,
   });
 
   bool get hasGuest => guestUid != null;
@@ -64,9 +78,13 @@ class OnlineRoom {
   String? opponentUidFor(String myUid) =>
       myUid == hostUid ? guestUid : hostUid;
 
+  String nameFor(String uid, {String fallback = ''}) => names[uid] ?? fallback;
+
   factory OnlineRoom.fromMap(String code, Map<String, dynamic> data) {
     final rawProgress = (data['progress'] as Map<String, dynamic>?) ?? const {};
     final rawPresence = (data['presence'] as Map<String, dynamic>?) ?? const {};
+    final rawNames = (data['names'] as Map<String, dynamic>?) ?? const {};
+    final rawVotes = (data['rematchVotes'] as Map<String, dynamic>?) ?? const {};
     return OnlineRoom(
       code: code,
       size: (data['size'] as num).toInt(),
@@ -86,6 +104,9 @@ class OnlineRoom {
           value is Timestamp ? value.toDate() : DateTime.fromMillisecondsSinceEpoch(0),
         ),
       ),
+      names: rawNames.map((uid, value) => MapEntry(uid, value as String)),
+      round: (data['round'] as num?)?.toInt() ?? 0,
+      rematchVotes: rawVotes.map((uid, value) => MapEntry(uid, value as bool)),
     );
   }
 }

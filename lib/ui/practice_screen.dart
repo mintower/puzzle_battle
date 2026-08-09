@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../core/puzzle_session.dart';
+import '../core/sound_service.dart';
 import 'board_view.dart';
 import 'puzzle_artwork.dart';
 import 'result_screen.dart';
@@ -44,10 +45,12 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
   void _handleTileTap(int tileIndex) {
     if (!_session.tryMove(tileIndex)) return;
+    SoundService.playMove();
     setState(() {});
 
     if (_session.isComplete && !_navigatedToResult) {
       _navigatedToResult = true;
+      SoundService.playWin();
       _stopwatch.stop();
       _tickTimer?.cancel();
       final elapsed = _stopwatch.elapsed;
@@ -59,6 +62,14 @@ class _PracticeScreenState extends State<PracticeScreen> {
             solo: true,
             elapsed: elapsed,
             playerMoves: moves,
+            onRematch: () {
+              Navigator.of(context).pushReplacement(MaterialPageRoute(
+                builder: (_) => PracticeScreen(
+                  boardSize: widget.boardSize,
+                  tileStyle: widget.tileStyle,
+                ),
+              ));
+            },
           ),
         ));
       });
