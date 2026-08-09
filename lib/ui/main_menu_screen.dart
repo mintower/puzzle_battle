@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/ai_opponent.dart';
 import 'match_screen.dart';
+import 'online_lobby_screen.dart';
 import 'practice_screen.dart';
 
 class MainMenuScreen extends StatefulWidget {
@@ -78,9 +79,13 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   child: const Text('연습 모드 (혼자 풀기)'),
                 ),
                 const SizedBox(height: 12),
-                const OutlinedButton(
-                  onPressed: null,
-                  child: Text('실시간 온라인 대전 (준비 중)'),
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => OnlineLobbyScreen(boardSize: _boardSize),
+                    ));
+                  },
+                  child: const Text('실시간 온라인 대전'),
                 ),
               ],
             ),

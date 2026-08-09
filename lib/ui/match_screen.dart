@@ -6,6 +6,7 @@ import '../core/ai_opponent.dart';
 import '../core/puzzle_match.dart';
 import '../core/puzzle_session.dart';
 import 'board_view.dart';
+import 'progress_row.dart';
 import 'result_screen.dart';
 
 class MatchScreen extends StatefulWidget {
@@ -116,13 +117,13 @@ class _MatchScreenState extends State<MatchScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _ProgressRow(
+            ProgressRow(
               label: 'AI',
               progress: _progressOf(_aiSession),
               color: Colors.redAccent,
             ),
             const SizedBox(height: 8),
-            _ProgressRow(
+            ProgressRow(
               label: '나',
               progress: _progressOf(_playerSession),
               color: Colors.blueAccent,
@@ -144,38 +145,6 @@ class _MatchScreenState extends State<MatchScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _ProgressRow extends StatelessWidget {
-  final String label;
-  final double progress;
-  final Color color;
-
-  const _ProgressRow({
-    required this.label,
-    required this.progress,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(width: 32, child: Text(label)),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 12,
-              color: color,
-              backgroundColor: color.withValues(alpha: 0.15),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
