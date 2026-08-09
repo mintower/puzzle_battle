@@ -97,6 +97,14 @@ class MatchRepository {
     });
   }
 
+  /// Heartbeat so the opponent can detect if we disappear mid-match
+  /// (closing a tab never gets a chance to signal "I'm leaving").
+  Future<void> sendHeartbeat({required String code, required String uid}) {
+    return _rooms.doc(code).update({
+      'presence.$uid': FieldValue.serverTimestamp(),
+    });
+  }
+
   /// Public matchmaking: joins the shared pool. Pair with [watchQueueMatch]
   /// (someone else finds us) and periodic [tryFindMatch] calls (we find
   /// someone else) to actually get matched. [tileStyle] is 'numbers' or

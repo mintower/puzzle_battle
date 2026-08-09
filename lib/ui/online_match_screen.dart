@@ -32,12 +32,16 @@ class OnlineMatchScreen extends StatefulWidget {
 }
 
 class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
+  static const _heartbeatInterval = Duration(seconds: 5);
+  static const _opponentTimeout = Duration(seconds: 12);
+
   final _repo = MatchRepository();
   StreamSubscription<OnlineRoom>? _roomSub;
   PuzzleSession? _session;
   OnlineRoom? _room;
   final _stopwatch = Stopwatch();
   Timer? _tickTimer;
+  Timer? _heartbeatTimer;
   bool _navigatedToResult = false;
 
   @override
@@ -53,7 +57,13 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
       _session = PuzzleSession(size: room.size, seed: room.seed);
       _stopwatch.start();
       _tickTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
-        if (mounted) setState(() {});
+        if (!mounted) return;
+        setState(() {});
+        _checkOpponentAlive();
+      });
+      _repo.sendHeartbeat(code: widget.roomCode, uid: widget.myUid);
+      _heartbeatTimer = Timer.periodic(_heartbeatInterval, (_) {
+        _repo.sendHeartbeat(code: widget.roomCode, uid: widget.myUid);
       });
     }
 
@@ -62,6 +72,23 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
         opponentUid == null ? null : room.progress[opponentUid];
     if (opponentProgress?.finished == true) {
       _endMatch(playerWon: false);
+    }
+  }
+
+  /// Detects an opponent who left mid-match (closing a tab never gets a
+  /// chance to signal it) by watching for their heartbeat going stale.
+  /// Runs off the existing 100ms tick rather than the room stream, since a
+  /// stopped heartbeat produces no new Firestore snapshot to react to.
+  void _checkOpponentAlive() {
+    if (_navigatedToResult) return;
+    final room = _room;
+    if (room == null) return;
+    final opponentUid = room.opponentUidFor(widget.myUid);
+    if (opponentUid == null) return;
+    final lastSeen = room.presence[opponentUid];
+    if (lastSeen == null) return; // haven't heard from them yet — don't guess
+    if (DateTime.now().difference(lastSeen) > _opponentTimeout) {
+      _endMatch(playerWon: true, note: '상대가 나가서 승리했습니다.');
     }
   }
 
@@ -90,11 +117,12 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
     }
   }
 
-  void _endMatch({required bool playerWon}) {
+  void _endMatch({required bool playerWon, String? note}) {
     if (_navigatedToResult) return;
     _navigatedToResult = true;
     _stopwatch.stop();
     _tickTimer?.cancel();
+    _heartbeatTimer?.cancel();
     final elapsed = _stopwatch.elapsed;
     final myMoves = _session?.moveCount ?? 0;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -104,6 +132,7 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
           playerWon: playerWon,
           elapsed: elapsed,
           playerMoves: myMoves,
+          note: note,
         ),
       ));
     });
@@ -123,6 +152,7 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
   void dispose() {
     _roomSub?.cancel();
     _tickTimer?.cancel();
+    _heartbeatTimer?.cancel();
     super.dispose();
   }
 

@@ -44,6 +44,10 @@ class OnlineRoom {
   final String status; // 'waiting' | 'active'
   final Map<String, PlayerProgress> progress;
 
+  /// Last heartbeat timestamp per uid, used to detect a player who left
+  /// (closed the tab) without the app getting a chance to signal it.
+  final Map<String, DateTime> presence;
+
   const OnlineRoom({
     required this.code,
     required this.size,
@@ -52,6 +56,7 @@ class OnlineRoom {
     required this.guestUid,
     required this.status,
     required this.progress,
+    required this.presence,
   });
 
   bool get hasGuest => guestUid != null;
@@ -61,6 +66,7 @@ class OnlineRoom {
 
   factory OnlineRoom.fromMap(String code, Map<String, dynamic> data) {
     final rawProgress = (data['progress'] as Map<String, dynamic>?) ?? const {};
+    final rawPresence = (data['presence'] as Map<String, dynamic>?) ?? const {};
     return OnlineRoom(
       code: code,
       size: (data['size'] as num).toInt(),
@@ -72,6 +78,12 @@ class OnlineRoom {
         (uid, value) => MapEntry(
           uid,
           PlayerProgress.fromMap(value as Map<String, dynamic>?),
+        ),
+      ),
+      presence: rawPresence.map(
+        (uid, value) => MapEntry(
+          uid,
+          value is Timestamp ? value.toDate() : DateTime.fromMillisecondsSinceEpoch(0),
         ),
       ),
     );

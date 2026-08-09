@@ -9,6 +9,7 @@ class ResultScreen extends StatelessWidget {
   final Duration elapsed;
   final int playerMoves;
   final int? aiMoves;
+  final String? note;
 
   const ResultScreen({
     super.key,
@@ -17,6 +18,7 @@ class ResultScreen extends StatelessWidget {
     required this.elapsed,
     required this.playerMoves,
     this.aiMoves,
+    this.note,
   });
 
   @override
@@ -31,6 +33,10 @@ class ResultScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(title, style: Theme.of(context).textTheme.headlineMedium),
+            if (note != null) ...[
+              const SizedBox(height: 4),
+              Text(note!, style: const TextStyle(color: Colors.grey)),
+            ],
             const SizedBox(height: 16),
             Text('기록: $minutes:$seconds'),
             Text(solo ? '이동 횟수: $playerMoves' : '내 이동 횟수: $playerMoves'),

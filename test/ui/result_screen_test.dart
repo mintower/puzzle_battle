@@ -49,4 +49,19 @@ void main() {
     expect(find.text('이동 횟수: 22'), findsOneWidget);
     expect(find.textContaining('AI'), findsNothing);
   });
+
+  testWidgets('ResultScreen shows an optional note (e.g. opponent left)',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: ResultScreen(
+        playerWon: true,
+        elapsed: Duration(seconds: 5),
+        playerMoves: 3,
+        note: '상대가 나가서 승리했습니다.',
+      ),
+    ));
+
+    expect(find.text('승리!'), findsOneWidget);
+    expect(find.text('상대가 나가서 승리했습니다.'), findsOneWidget);
+  });
 }
