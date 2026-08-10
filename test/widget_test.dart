@@ -43,6 +43,34 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
   });
 
+  testWidgets(
+      'typing a nickname and starting a match shows that nickname, not the '
+      'stale value from startup (regression: GameSetupPanel is built '
+      'inline with the nickname baked in as a constructor param, so '
+      'editing the field must trigger a rebuild or the typed name never '
+      'reaches it)', (tester) async {
+    await tester.pumpWidget(const PuzzleBattleApp());
+    await tester.enterText(find.byType(TextField), '민토');
+    await tester.pump();
+
+    await tester.tap(find.text('AI와 대전 시작'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(MatchScreen), findsOneWidget);
+    // Scoped to MatchScreen: the nickname TextField (still holding "민토"
+    // underneath, in the now-unmounted-in-spirit-but-not-disposed
+    // MainMenuScreen) would otherwise also match.
+    expect(
+      find.descendant(of: find.byType(MatchScreen), matching: find.text('민토')),
+      findsOneWidget,
+    );
+    expect(find.text('플레이어'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
+  });
+
   testWidgets('Tapping practice mode navigates to a solo board with no AI',
       (tester) async {
     await tester.pumpWidget(const PuzzleBattleApp());

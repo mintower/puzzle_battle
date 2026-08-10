@@ -58,7 +58,15 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                     counterText: '',
                     hintText: '온라인 대전에서 표시될 이름',
                   ),
-                  onChanged: (value) => NicknameService.setNickname(value),
+                  onChanged: (value) {
+                    NicknameService.setNickname(value);
+                    // GameSetupPanel below is built with the current
+                    // _nickname value baked in as a constructor param, so
+                    // without a rebuild here it keeps showing whatever
+                    // nickname was loaded at startup instead of what's
+                    // just been typed.
+                    setState(() {});
+                  },
                 ),
                 const SizedBox(height: 24),
                 GameSetupPanel(
