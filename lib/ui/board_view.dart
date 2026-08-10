@@ -11,6 +11,8 @@ enum TileStyle { numbers, picture }
 /// by its value (not its position), so Flutter's implicit animations
 /// smoothly slide a tile to its new spot whenever the board changes.
 class BoardView extends StatelessWidget {
+  static const correctHighlightColor = Color(0xFF22C55E);
+
   final PuzzleBoard board;
   final ValueChanged<int>? onTileTap;
   final Color? tileColor;
@@ -20,6 +22,11 @@ class BoardView extends StatelessWidget {
   /// a lock icon and not tappable, even if [onTileTap] is set.
   final Set<int> lockedTileValues;
 
+  /// Highlights tiles currently sitting in their solved position in bright
+  /// green — used on the opponent's mini board so their progress reads at
+  /// a glance without having to compare numbers.
+  final bool highlightCorrectTiles;
+
   const BoardView({
     super.key,
     required this.board,
@@ -27,6 +34,7 @@ class BoardView extends StatelessWidget {
     this.tileColor,
     this.tileStyle = TileStyle.numbers,
     this.lockedTileValues = const {},
+    this.highlightCorrectTiles = false,
   });
 
   @override
@@ -44,6 +52,10 @@ class BoardView extends StatelessWidget {
           final row = index ~/ board.size;
           final col = index % board.size;
           final isLocked = lockedTileValues.contains(value);
+          final isCorrect = highlightCorrectTiles && value == index + 1;
+          final backgroundColor = tileStyle == TileStyle.picture
+              ? Colors.transparent
+              : (isCorrect ? correctHighlightColor : color);
           tiles.add(
             AnimatedPositioned(
               key: ValueKey(value),
@@ -56,7 +68,7 @@ class BoardView extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(3),
                 child: Material(
-                  color: tileStyle == TileStyle.picture ? Colors.transparent : color,
+                  color: backgroundColor,
                   borderRadius: BorderRadius.circular(8),
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
@@ -67,6 +79,13 @@ class BoardView extends StatelessWidget {
                       alignment: Alignment.center,
                       children: [
                         _tileContent(value, boardSide, tileSide),
+                        if (isCorrect && tileStyle == TileStyle.picture)
+                          Container(
+                            decoration: BoxDecoration(
+                              color: correctHighlightColor.withValues(alpha: 0.35),
+                              border: Border.all(color: correctHighlightColor, width: 2),
+                            ),
+                          ),
                         if (isLocked)
                           Container(
                             color: Colors.black45,

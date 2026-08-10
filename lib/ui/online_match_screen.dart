@@ -295,6 +295,7 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
                 child: BoardView(
                   board: PuzzleBoard(size: room.size, tiles: opponentTiles),
                   tileStyle: widget.tileStyle,
+                  highlightCorrectTiles: true,
                 ),
               )
             : null;

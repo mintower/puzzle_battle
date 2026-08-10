@@ -98,4 +98,52 @@ void main() {
     await tester.pump();
     expect(tappedIndex, 6);
   });
+
+  testWidgets(
+      'with highlightCorrectTiles, tiles in their solved position turn '
+      'green and misplaced tiles keep their normal color', (tester) async {
+    // Tiles 1-7 already sit in their solved positions (index == value - 1);
+    // tile 8 sits at index 8 but belongs at index 7 (where the blank is),
+    // so it's the one misplaced tile.
+    final board = PuzzleBoard(size: 3, tiles: [1, 2, 3, 4, 5, 6, 7, 0, 8]);
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SizedBox(
+          width: 300,
+          height: 300,
+          child: BoardView(board: board, highlightCorrectTiles: true),
+        ),
+      ),
+    ));
+
+    Material materialFor(String text) => tester.widget<Material>(
+          find.ancestor(of: find.text(text), matching: find.byType(Material)).first,
+        );
+
+    expect(materialFor('1').color, BoardView.correctHighlightColor);
+    expect(materialFor('7').color, BoardView.correctHighlightColor);
+    expect(materialFor('8').color, isNot(BoardView.correctHighlightColor));
+  });
+
+  testWidgets(
+      'without highlightCorrectTiles (the default), solved-position tiles '
+      "don't turn green", (tester) async {
+    final board = PuzzleBoard(size: 3, tiles: [1, 2, 3, 4, 5, 6, 7, 0, 8]);
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SizedBox(
+          width: 300,
+          height: 300,
+          child: BoardView(board: board),
+        ),
+      ),
+    ));
+
+    final material = tester.widget<Material>(
+      find.ancestor(of: find.text('1'), matching: find.byType(Material)).first,
+    );
+    expect(material.color, isNot(BoardView.correctHighlightColor));
+  });
 }
