@@ -99,6 +99,7 @@ class _GameSetupPanelState extends State<GameSetupPanel> {
                 boardSize: widget.boardSize,
                 difficulty: _difficulty,
                 tileStyle: _tileStyle,
+                nickname: widget.nickname,
               ),
             ));
           },

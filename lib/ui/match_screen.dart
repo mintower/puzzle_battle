@@ -15,12 +15,14 @@ class MatchScreen extends StatefulWidget {
   final int boardSize;
   final AiDifficultyProfile difficulty;
   final TileStyle tileStyle;
+  final String nickname;
 
   const MatchScreen({
     super.key,
     required this.boardSize,
     required this.difficulty,
     this.tileStyle = TileStyle.numbers,
+    this.nickname = '나',
   });
 
   @override
@@ -94,6 +96,7 @@ class _MatchScreenState extends State<MatchScreen> {
             boardSize: widget.boardSize,
             difficulty: widget.difficulty,
             tileStyle: widget.tileStyle,
+            nickname: widget.nickname,
           ),
         ),
       ));
@@ -116,16 +119,13 @@ class _MatchScreenState extends State<MatchScreen> {
     final minutes = elapsed.inMinutes.toString().padLeft(2, '0');
     final seconds = (elapsed.inSeconds % 60).toString().padLeft(2, '0');
 
+    final referenceThumbnail = widget.tileStyle == TileStyle.picture
+        ? const PuzzlePreviewThumbnail(size: 40)
+        : null;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('$minutes:$seconds'),
-        actions: [
-          if (widget.tileStyle == TileStyle.picture)
-            const Padding(
-              padding: EdgeInsets.only(right: 12),
-              child: Center(child: PuzzlePreviewThumbnail(size: 40)),
-            ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -135,12 +135,14 @@ class _MatchScreenState extends State<MatchScreen> {
               label: 'AI',
               progress: _progressOf(_aiSession),
               color: Colors.redAccent,
+              trailing: referenceThumbnail,
             ),
             const SizedBox(height: 8),
             ProgressRow(
-              label: '나',
+              label: widget.nickname,
               progress: _progressOf(_playerSession),
               color: Colors.blueAccent,
+              trailing: referenceThumbnail,
             ),
             const SizedBox(height: 16),
             Text('이동 횟수: ${_playerSession.moveCount}'),

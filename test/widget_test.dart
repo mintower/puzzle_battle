@@ -28,7 +28,9 @@ void main() {
 
     expect(find.byType(MatchScreen), findsOneWidget);
     expect(find.text('AI'), findsOneWidget);
-    expect(find.text('나'), findsOneWidget);
+    // Player's own row is labeled with their nickname (defaults to
+    // '플레이어' when nothing has been typed into the field yet).
+    expect(find.text('플레이어'), findsOneWidget);
     expect(find.text('이동 횟수: 0'), findsOneWidget);
     // A 4x4 board's highest tile is 15; a 3x3 board would top out at 8.
     expect(find.text('15'), findsOneWidget);

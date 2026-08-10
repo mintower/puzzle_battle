@@ -280,51 +280,42 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
     final minutes = elapsed.inMinutes.toString().padLeft(2, '0');
     final seconds = (elapsed.inSeconds % 60).toString().padLeft(2, '0');
 
+    final referenceThumbnail = widget.tileStyle == TileStyle.picture
+        ? const PuzzlePreviewThumbnail(size: 40)
+        : null;
+    final opponentMiniBoard =
+        opponentTiles != null && opponentTiles.length == room.size * room.size
+            ? SizedBox(
+                width: 56,
+                height: 56,
+                child: BoardView(
+                  board: PuzzleBoard(size: room.size, tiles: opponentTiles),
+                  tileStyle: widget.tileStyle,
+                ),
+              )
+            : null;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('$minutes:$seconds'),
-        actions: [
-          if (widget.tileStyle == TileStyle.picture)
-            const Padding(
-              padding: EdgeInsets.only(right: 12),
-              child: Center(child: PuzzlePreviewThumbnail(size: 40)),
-            ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (opponentTiles != null &&
-                    opponentTiles.length == room.size * room.size)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: SizedBox(
-                      width: 56,
-                      height: 56,
-                      child: BoardView(
-                        board: PuzzleBoard(size: room.size, tiles: opponentTiles),
-                        tileStyle: widget.tileStyle,
-                      ),
-                    ),
-                  ),
-                Expanded(
-                  child: ProgressRow(
-                    label: opponentName,
-                    progress: opponentProgress.ratio,
-                    color: Colors.redAccent,
-                  ),
-                ),
-              ],
+            ProgressRow(
+              label: opponentName,
+              progress: opponentProgress.ratio,
+              color: Colors.redAccent,
+              leading: opponentMiniBoard,
+              trailing: referenceThumbnail,
             ),
             const SizedBox(height: 8),
             ProgressRow(
               label: myName,
               progress: session.board.correctTileCount / (session.board.tiles.length - 1),
               color: Colors.blueAccent,
+              trailing: referenceThumbnail,
             ),
             const SizedBox(height: 16),
             Row(
