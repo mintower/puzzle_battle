@@ -73,7 +73,26 @@ class _GameSetupPanelState extends State<GameSetupPanel> {
           onSelectionChanged: (s) => setState(() => _difficultyLabel = s.first),
         ),
         const SizedBox(height: 32),
+        // Primary call to action — real-time online play is the default
+        // mode, so it's the highlighted (filled) button, placed first.
         FilledButton(
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          onPressed: () {
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => OnlineLobbyScreen(
+                boardSize: widget.boardSize,
+                tileStyle: _tileStyle,
+                nickname: widget.nickname,
+              ),
+            ));
+          },
+          child: const Text('실시간 온라인 대전'),
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton(
           onPressed: () {
             Navigator.of(context).push(MaterialPageRoute(
               builder: (_) => MatchScreen(
@@ -96,19 +115,6 @@ class _GameSetupPanelState extends State<GameSetupPanel> {
             ));
           },
           child: const Text('연습 모드 (혼자 풀기)'),
-        ),
-        const SizedBox(height: 12),
-        OutlinedButton(
-          onPressed: () {
-            Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => OnlineLobbyScreen(
-                boardSize: widget.boardSize,
-                tileStyle: _tileStyle,
-                nickname: widget.nickname,
-              ),
-            ));
-          },
-          child: const Text('실시간 온라인 대전'),
         ),
       ],
     );
