@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../core/ai_opponent.dart';
+import 'ai_setup_screen.dart';
 import 'board_view.dart';
-import 'match_screen.dart';
 import 'online_lobby_screen.dart';
 import 'practice_screen.dart';
 
@@ -30,13 +29,6 @@ class GameSetupPanel extends StatefulWidget {
 
 class _GameSetupPanelState extends State<GameSetupPanel> {
   TileStyle _tileStyle = TileStyle.numbers;
-  String _difficultyLabel = 'Medium';
-
-  AiDifficultyProfile get _difficulty => switch (_difficultyLabel) {
-        'Easy' => AiDifficultyProfile.easy,
-        'Hard' => AiDifficultyProfile.hard,
-        _ => AiDifficultyProfile.medium,
-      };
 
   @override
   Widget build(BuildContext context) {
@@ -74,12 +66,13 @@ class _GameSetupPanelState extends State<GameSetupPanel> {
           child: const Text('실시간 온라인 대전'),
         ),
         const SizedBox(height: 12),
+        // AI 난이도 lives on AiSetupScreen behind this button — it's a
+        // sub-choice of the AI match specifically, with no effect on
+        // online or practice mode, so it doesn't belong on this panel.
         OutlinedButton(
           onPressed: () {
             Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => MatchScreen(
-                boardSize: GameSetupPanel._boardSize,
-                difficulty: _difficulty,
+              builder: (_) => AiSetupScreen(
                 tileStyle: _tileStyle,
                 nickname: widget.nickname,
               ),
@@ -87,38 +80,7 @@ class _GameSetupPanelState extends State<GameSetupPanel> {
           },
           child: const Text('AI와 대전 시작'),
         ),
-        const SizedBox(height: 8),
-        // AI 난이도 is a sub-choice of "AI와 대전 시작" specifically (it has
-        // no effect on online or practice mode), so it sits right under
-        // that button instead of applying to the whole panel up top.
-        Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'AI 난이도',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 6),
-              SegmentedButton<String>(
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(value: 'Easy', label: segmentLabel('쉬움')),
-                  ButtonSegment(value: 'Medium', label: segmentLabel('보통')),
-                  ButtonSegment(value: 'Hard', label: segmentLabel('어려움')),
-                ],
-                selected: {_difficultyLabel},
-                onSelectionChanged: (s) => setState(() => _difficultyLabel = s.first),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
         OutlinedButton(
           onPressed: () {
             Navigator.of(context).push(MaterialPageRoute(

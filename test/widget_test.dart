@@ -2,32 +2,39 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:puzzle_battle/main.dart';
+import 'package:puzzle_battle/ui/ai_setup_screen.dart';
 import 'package:puzzle_battle/ui/match_screen.dart';
 import 'package:puzzle_battle/ui/practice_screen.dart';
 
 void main() {
   testWidgets(
       'Main menu renders nickname and the three ways to play, with AI '
-      'difficulty nested under the AI match button', (tester) async {
+      "difficulty tucked away behind the AI match button (not shown until "
+      "you're inside it)", (tester) async {
     await tester.pumpWidget(const PuzzleBattleApp());
 
     expect(find.text('닉네임'), findsOneWidget);
     expect(find.text('실시간 온라인 대전'), findsOneWidget);
     expect(find.text('AI와 대전 시작'), findsOneWidget);
     expect(find.text('연습 모드 (혼자 풀기)'), findsOneWidget);
-    expect(find.text('AI 난이도'), findsOneWidget);
-    // AI 난이도 comes after (under) the AI match button, not before it.
-    final buttonY = tester.getTopLeft(find.text('AI와 대전 시작')).dy;
-    final difficultyY = tester.getTopLeft(find.text('AI 난이도')).dy;
-    expect(difficultyY, greaterThan(buttonY));
+    expect(find.text('AI 난이도'), findsNothing);
   });
 
-  testWidgets('Tapping start navigates to a 4x4 match by default',
-      (tester) async {
+  testWidgets(
+      'Tapping "AI와 대전 시작" opens the AI difficulty picker, and starting '
+      'from there begins a 4x4 match', (tester) async {
     await tester.pumpWidget(const PuzzleBattleApp());
     await tester.tap(find.text('AI와 대전 시작'));
-    await tester.pump(); // start the push transition
-    await tester.pump(const Duration(milliseconds: 300)); // finish it
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(AiSetupScreen), findsOneWidget);
+    expect(find.text('AI 난이도'), findsOneWidget);
+    expect(find.byType(MatchScreen), findsNothing);
+
+    await tester.tap(find.text('대전 시작'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byType(MatchScreen), findsOneWidget);
     expect(find.text('AI'), findsOneWidget);
@@ -47,16 +54,19 @@ void main() {
   });
 
   testWidgets(
-      'typing a nickname and starting a match shows that nickname, not the '
-      'stale value from startup (regression: GameSetupPanel is built '
-      'inline with the nickname baked in as a constructor param, so '
-      'editing the field must trigger a rebuild or the typed name never '
-      'reaches it)', (tester) async {
+      'typing a nickname and starting a match through the AI setup screen '
+      'shows that nickname, not the stale value from startup (regression: '
+      'GameSetupPanel is built inline with the nickname baked in as a '
+      'constructor param, so editing the field must trigger a rebuild or '
+      'the typed name never reaches it)', (tester) async {
     await tester.pumpWidget(const PuzzleBattleApp());
     await tester.enterText(find.byType(TextField), '민토');
     await tester.pump();
 
     await tester.tap(find.text('AI와 대전 시작'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('대전 시작'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
