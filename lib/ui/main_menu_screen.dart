@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../core/nickname_service.dart';
-import 'custom_game_screen.dart';
 import 'game_setup_panel.dart';
 
 class MainMenuScreen extends StatefulWidget {
@@ -12,8 +11,6 @@ class MainMenuScreen extends StatefulWidget {
 }
 
 class _MainMenuScreenState extends State<MainMenuScreen> {
-  static const _defaultBoardSize = 4;
-
   final _nicknameController = TextEditingController();
 
   @override
@@ -69,19 +66,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   },
                 ),
                 const SizedBox(height: 24),
-                GameSetupPanel(
-                  boardSize: _defaultBoardSize,
-                  nickname: _nickname,
-                ),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => CustomGameScreen(nickname: _nickname),
-                    ));
-                  },
-                  child: const Text('커스텀 게임 (3x3 / 5x5)'),
-                ),
+                GameSetupPanel(nickname: _nickname),
               ],
             ),
           ),

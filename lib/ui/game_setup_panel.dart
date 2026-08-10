@@ -16,18 +16,13 @@ Widget segmentLabel(String text) {
   );
 }
 
-/// Tile style + AI difficulty pickers and the three ways to start playing
-/// a given [boardSize] — shared between the main menu (fixed at 4x4) and
-/// the custom game screen (3x3/5x5).
+/// Tile style picker and the three ways to start a 4x4 game.
 class GameSetupPanel extends StatefulWidget {
-  final int boardSize;
+  static const _boardSize = 4;
+
   final String nickname;
 
-  const GameSetupPanel({
-    super.key,
-    required this.boardSize,
-    required this.nickname,
-  });
+  const GameSetupPanel({super.key, required this.nickname});
 
   @override
   State<GameSetupPanel> createState() => _GameSetupPanelState();
@@ -59,19 +54,6 @@ class _GameSetupPanelState extends State<GameSetupPanel> {
           selected: {_tileStyle},
           onSelectionChanged: (s) => setState(() => _tileStyle = s.first),
         ),
-        const SizedBox(height: 24),
-        const Text('AI 난이도', style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        SegmentedButton<String>(
-          showSelectedIcon: false,
-          segments: [
-            ButtonSegment(value: 'Easy', label: segmentLabel('쉬움')),
-            ButtonSegment(value: 'Medium', label: segmentLabel('보통')),
-            ButtonSegment(value: 'Hard', label: segmentLabel('어려움')),
-          ],
-          selected: {_difficultyLabel},
-          onSelectionChanged: (s) => setState(() => _difficultyLabel = s.first),
-        ),
         const SizedBox(height: 32),
         // Primary call to action — real-time online play is the default
         // mode, so it's the highlighted (filled) button, placed first.
@@ -83,7 +65,7 @@ class _GameSetupPanelState extends State<GameSetupPanel> {
           onPressed: () {
             Navigator.of(context).push(MaterialPageRoute(
               builder: (_) => OnlineLobbyScreen(
-                boardSize: widget.boardSize,
+                boardSize: GameSetupPanel._boardSize,
                 tileStyle: _tileStyle,
                 nickname: widget.nickname,
               ),
@@ -96,7 +78,7 @@ class _GameSetupPanelState extends State<GameSetupPanel> {
           onPressed: () {
             Navigator.of(context).push(MaterialPageRoute(
               builder: (_) => MatchScreen(
-                boardSize: widget.boardSize,
+                boardSize: GameSetupPanel._boardSize,
                 difficulty: _difficulty,
                 tileStyle: _tileStyle,
                 nickname: widget.nickname,
@@ -105,12 +87,43 @@ class _GameSetupPanelState extends State<GameSetupPanel> {
           },
           child: const Text('AI와 대전 시작'),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
+        // AI 난이도 is a sub-choice of "AI와 대전 시작" specifically (it has
+        // no effect on online or practice mode), so it sits right under
+        // that button instead of applying to the whole panel up top.
+        Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'AI 난이도',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 6),
+              SegmentedButton<String>(
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(value: 'Easy', label: segmentLabel('쉬움')),
+                  ButtonSegment(value: 'Medium', label: segmentLabel('보통')),
+                  ButtonSegment(value: 'Hard', label: segmentLabel('어려움')),
+                ],
+                selected: {_difficultyLabel},
+                onSelectionChanged: (s) => setState(() => _difficultyLabel = s.first),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
         OutlinedButton(
           onPressed: () {
             Navigator.of(context).push(MaterialPageRoute(
               builder: (_) => PracticeScreen(
-                boardSize: widget.boardSize,
+                boardSize: GameSetupPanel._boardSize,
                 tileStyle: _tileStyle,
               ),
             ));

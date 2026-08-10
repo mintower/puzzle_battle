@@ -2,21 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:puzzle_battle/main.dart';
-import 'package:puzzle_battle/ui/custom_game_screen.dart';
 import 'package:puzzle_battle/ui/match_screen.dart';
 import 'package:puzzle_battle/ui/practice_screen.dart';
 
 void main() {
   testWidgets(
-      'Main menu renders nickname, difficulty controls, and a custom-game link '
-      '(no inline board-size picker — 4x4 is the fixed default)',
-      (tester) async {
+      'Main menu renders nickname and the three ways to play, with AI '
+      'difficulty nested under the AI match button', (tester) async {
     await tester.pumpWidget(const PuzzleBattleApp());
 
-    expect(find.text('AI와 대전 시작'), findsOneWidget);
     expect(find.text('닉네임'), findsOneWidget);
-    expect(find.text('보드 크기'), findsNothing);
-    expect(find.text('커스텀 게임 (3x3 / 5x5)'), findsOneWidget);
+    expect(find.text('실시간 온라인 대전'), findsOneWidget);
+    expect(find.text('AI와 대전 시작'), findsOneWidget);
+    expect(find.text('연습 모드 (혼자 풀기)'), findsOneWidget);
+    expect(find.text('AI 난이도'), findsOneWidget);
+    // AI 난이도 comes after (under) the AI match button, not before it.
+    final buttonY = tester.getTopLeft(find.text('AI와 대전 시작')).dy;
+    final difficultyY = tester.getTopLeft(find.text('AI 난이도')).dy;
+    expect(difficultyY, greaterThan(buttonY));
   });
 
   testWidgets('Tapping start navigates to a 4x4 match by default',
@@ -85,40 +88,5 @@ void main() {
     // Only a periodic timer runs here (no AI loop), but drain it anyway.
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 1));
-  });
-
-  testWidgets(
-      'Custom game screen offers only 3x3/5x5 and starts a 3x3 match by default',
-      (tester) async {
-    await tester.pumpWidget(const PuzzleBattleApp());
-    // The button sits below the fold on the default test viewport, inside
-    // a SingleChildScrollView — scroll it into view before tapping.
-    await tester.ensureVisible(find.text('커스텀 게임 (3x3 / 5x5)'));
-    await tester.tap(find.text('커스텀 게임 (3x3 / 5x5)'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    expect(find.byType(CustomGameScreen), findsOneWidget);
-    expect(find.text('3x3'), findsOneWidget);
-    expect(find.text('5x5'), findsOneWidget);
-    expect(find.text('4x4'), findsNothing);
-
-    // MainMenuScreen (also holding an "AI와 대전 시작" button) stays mounted
-    // underneath CustomGameScreen in the Navigator stack, so scope the tap
-    // to the current screen instead of matching both.
-    await tester.tap(find.descendant(
-      of: find.byType(CustomGameScreen),
-      matching: find.text('AI와 대전 시작'),
-    ));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    expect(find.byType(MatchScreen), findsOneWidget);
-    // A 3x3 board's highest tile is 8; there is no tile '15' on it.
-    expect(find.text('15'), findsNothing);
-    expect(find.text('8'), findsOneWidget);
-
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump(const Duration(seconds: 3));
   });
 }
