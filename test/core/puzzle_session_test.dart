@@ -64,14 +64,31 @@ void main() {
       expect(session.combo, 0);
     });
 
+    test('a locked tile cannot be moved, and it unlocks once its turn count '
+        'expires', () {
+      final session = PuzzleSession(size: 3, seed: 1)
+        ..board = PuzzleBoard(size: 3, tiles: [1, 2, 3, 4, 0, 6, 7, 5, 8]);
+      session.lockedTiles[5] = 2; // tile '5' sits at index 7
+
+      expect(session.tryMove(7), isFalse, reason: 'tile 5 is locked');
+      expect(session.moveCount, 0);
+
+      expect(session.tryMove(3), isTrue); // moves tile '4' instead
+      expect(session.lockedTiles[5], 1);
+
+      expect(session.tryMove(0), isTrue); // one more own move expires it
+      expect(session.lockedTiles.containsKey(5), isFalse);
+    });
+
     test(
-        'applyDisruption moves the board without counting as the player\'s '
-        'own moves, and resets combo', () {
+        'applyShuffle only ever produces a valid permutation (it moves the '
+        'blank via real legal slides, never swaps arbitrary cells) and '
+        "resets combo without counting as the player's own move", () {
       final session = PuzzleSession(size: 4, seed: 3);
       session.tryMove(session.board.availableMoves.first);
       final movesBefore = session.moveCount;
 
-      session.applyDisruption(3, Random(0));
+      session.applyShuffle(Random(0));
 
       expect(session.moveCount, movesBefore);
       expect(session.combo, 0);
@@ -79,13 +96,58 @@ void main() {
       expect(sortedTiles, List<int>.generate(16, (i) => i));
     });
 
-    test('applyDisruption is a no-op once the board is already solved', () {
+    test('applyShuffle is a no-op once the board is already solved', () {
       final session = PuzzleSession(size: 3, seed: 1)
         ..board = PuzzleBoard.solved(3);
 
-      session.applyDisruption(5, Random(0));
+      session.applyShuffle(Random(0));
 
       expect(session.board, PuzzleBoard.solved(3));
+    });
+
+    test(
+        'applyIncomingLock locks 1-2 currently-misplaced tiles and resets '
+        'combo', () {
+      final session = PuzzleSession(size: 4, seed: 3);
+      session.tryMove(session.board.availableMoves.first);
+
+      session.applyIncomingLock(Random(0));
+
+      expect(session.lockedTiles.length, inInclusiveRange(1, 2));
+      expect(session.combo, 0);
+      for (final value in session.lockedTiles.keys) {
+        final index = session.board.tiles.indexOf(value);
+        expect(index, isNot(session.board.tiles.length - 1),
+            reason: 'a locked tile should be a real misplaced tile, not the blank slot');
+      }
+    });
+
+    test('applyIncomingLock is a no-op once the board is already solved', () {
+      final session = PuzzleSession(size: 3, seed: 1)
+        ..board = PuzzleBoard.solved(3);
+
+      session.applyIncomingLock(Random(0));
+
+      expect(session.lockedTiles, isEmpty);
+    });
+
+    test(
+        'checkNewlyCompletedQuadrants reports 4 for an already-solved board, '
+        'then 0 on a repeat check with no change', () {
+      final session = PuzzleSession(size: 4, seed: 1)..board = PuzzleBoard.solved(4);
+
+      expect(session.checkNewlyCompletedQuadrants(), 4);
+      expect(session.quadrantStatus, [true, true, true, true]);
+      expect(session.checkNewlyCompletedQuadrants(), 0);
+    });
+
+    test('checkNewlyCompletedQuadrants only counts fully-solved quadrants',
+        () {
+      final session = PuzzleSession(size: 3, seed: 1)
+        ..board = PuzzleBoard(size: 3, tiles: [1, 3, 2, 6, 8, 5, 4, 7, 0]);
+
+      expect(session.checkNewlyCompletedQuadrants(), 1); // only the top-left corner
+      expect(session.quadrantStatus, [true, false, false, false]);
     });
   });
 }

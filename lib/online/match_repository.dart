@@ -114,11 +114,27 @@ class MatchRepository {
     });
   }
 
-  /// Sends one attack unit to [targetUid] — consumed the next time their
-  /// client observes [OnlineRoom.attackCount] increase.
-  Future<void> sendAttack({required String code, required String targetUid}) {
+  /// Sends one shuffle attack to [targetUid] — scrambles a 2x2 window of
+  /// their board. Consumed the next time their client observes
+  /// [OnlineRoom.shuffleAttacks] increase.
+  Future<void> sendShuffleAttack({
+    required String code,
+    required String targetUid,
+  }) {
     return _rooms.doc(code).update({
-      'attackCount.$targetUid': FieldValue.increment(1),
+      'shuffleAttacks.$targetUid': FieldValue.increment(1),
+    });
+  }
+
+  /// Sends one lock attack to [targetUid] — freezes 1-2 of their
+  /// currently-misplaced tiles for a few of their own moves. Consumed the
+  /// next time their client observes [OnlineRoom.lockAttacks] increase.
+  Future<void> sendLockAttack({
+    required String code,
+    required String targetUid,
+  }) {
+    return _rooms.doc(code).update({
+      'lockAttacks.$targetUid': FieldValue.increment(1),
     });
   }
 

@@ -70,10 +70,13 @@ class OnlineRoom {
   /// Which uids have voted to rematch for the *next* round.
   final Map<String, bool> rematchVotes;
 
-  /// Total attacks *received* by each uid so far (monotonically
+  /// Shuffle attacks *received* by each uid so far (monotonically
   /// increasing). A client compares this against the last count it's
   /// already applied locally to detect and react to new incoming attacks.
-  final Map<String, int> attackCount;
+  final Map<String, int> shuffleAttacks;
+
+  /// Same idea as [shuffleAttacks], for lock attacks.
+  final Map<String, int> lockAttacks;
 
   const OnlineRoom({
     required this.code,
@@ -87,7 +90,8 @@ class OnlineRoom {
     required this.names,
     required this.round,
     required this.rematchVotes,
-    required this.attackCount,
+    required this.shuffleAttacks,
+    required this.lockAttacks,
   });
 
   bool get hasGuest => guestUid != null;
@@ -102,7 +106,10 @@ class OnlineRoom {
     final rawPresence = (data['presence'] as Map<String, dynamic>?) ?? const {};
     final rawNames = (data['names'] as Map<String, dynamic>?) ?? const {};
     final rawVotes = (data['rematchVotes'] as Map<String, dynamic>?) ?? const {};
-    final rawAttacks = (data['attackCount'] as Map<String, dynamic>?) ?? const {};
+    final rawShuffleAttacks =
+        (data['shuffleAttacks'] as Map<String, dynamic>?) ?? const {};
+    final rawLockAttacks =
+        (data['lockAttacks'] as Map<String, dynamic>?) ?? const {};
     return OnlineRoom(
       code: code,
       size: (data['size'] as num).toInt(),
@@ -125,7 +132,10 @@ class OnlineRoom {
       names: rawNames.map((uid, value) => MapEntry(uid, value as String)),
       round: (data['round'] as num?)?.toInt() ?? 0,
       rematchVotes: rawVotes.map((uid, value) => MapEntry(uid, value as bool)),
-      attackCount: rawAttacks.map(
+      shuffleAttacks: rawShuffleAttacks.map(
+        (uid, value) => MapEntry(uid, (value as num).toInt()),
+      ),
+      lockAttacks: rawLockAttacks.map(
         (uid, value) => MapEntry(uid, (value as num).toInt()),
       ),
     );

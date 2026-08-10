@@ -103,8 +103,11 @@ void main() {
       expect(room.round, 2);
     });
 
-    test('attackCount defaults to empty and parses when present', () {
-      expect(buildRoom(guestUid: 'guest-uid').attackCount, isEmpty);
+    test('shuffleAttacks/lockAttacks default to empty and parse when present',
+        () {
+      final defaultRoom = buildRoom(guestUid: 'guest-uid');
+      expect(defaultRoom.shuffleAttacks, isEmpty);
+      expect(defaultRoom.lockAttacks, isEmpty);
 
       final room = OnlineRoom.fromMap('1234', {
         'size': 3,
@@ -113,10 +116,13 @@ void main() {
         'guestUid': 'guest-uid',
         'status': 'active',
         'progress': <String, dynamic>{},
-        'attackCount': {'guest-uid': 2},
+        'shuffleAttacks': {'guest-uid': 2},
+        'lockAttacks': {'host-uid': 1},
       });
-      expect(room.attackCount['guest-uid'], 2);
-      expect(room.attackCount['host-uid'], isNull);
+      expect(room.shuffleAttacks['guest-uid'], 2);
+      expect(room.shuffleAttacks['host-uid'], isNull);
+      expect(room.lockAttacks['host-uid'], 1);
+      expect(room.lockAttacks['guest-uid'], isNull);
     });
   });
 }

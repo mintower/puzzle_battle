@@ -16,12 +16,17 @@ class BoardView extends StatelessWidget {
   final Color? tileColor;
   final TileStyle tileStyle;
 
+  /// Tile values a lock attack has frozen in place — rendered dimmed with
+  /// a lock icon and not tappable, even if [onTileTap] is set.
+  final Set<int> lockedTileValues;
+
   const BoardView({
     super.key,
     required this.board,
     this.onTileTap,
     this.tileColor,
     this.tileStyle = TileStyle.numbers,
+    this.lockedTileValues = const {},
   });
 
   @override
@@ -38,6 +43,7 @@ class BoardView extends StatelessWidget {
           if (value == 0) continue;
           final row = index ~/ board.size;
           final col = index % board.size;
+          final isLocked = lockedTileValues.contains(value);
           tiles.add(
             AnimatedPositioned(
               key: ValueKey(value),
@@ -54,8 +60,20 @@ class BoardView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
-                    onTap: onTileTap == null ? null : () => onTileTap!(index),
-                    child: _tileContent(value, boardSide, tileSide),
+                    onTap: (onTileTap == null || isLocked)
+                        ? null
+                        : () => onTileTap!(index),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        _tileContent(value, boardSide, tileSide),
+                        if (isLocked)
+                          Container(
+                            color: Colors.black45,
+                            child: const Icon(Icons.lock, color: Colors.white),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),

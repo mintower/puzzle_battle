@@ -64,4 +64,38 @@ void main() {
 
     expect(tappedIndex, 8);
   });
+
+  testWidgets(
+      'a locked tile shows a lock icon and does not report taps, but other '
+      'tiles remain tappable', (tester) async {
+    final board = PuzzleBoard(size: 3, tiles: [1, 2, 3, 4, 5, 6, 7, 0, 8]);
+    int? tappedIndex;
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SizedBox(
+          width: 300,
+          height: 300,
+          child: BoardView(
+            board: board,
+            onTileTap: (index) => tappedIndex = index,
+            lockedTileValues: const {8},
+          ),
+        ),
+      ),
+    ));
+
+    expect(find.byIcon(Icons.lock), findsOneWidget);
+
+    // The lock overlay visually covers the tile's own text, so the tap
+    // lands on the overlay rather than the Text widget underneath — both
+    // are inside the same (disabled) InkWell, so the effect is the same.
+    await tester.tap(find.text('8'), warnIfMissed: false);
+    await tester.pump();
+    expect(tappedIndex, isNull);
+
+    await tester.tap(find.text('7')); // unlocked tile — still works
+    await tester.pump();
+    expect(tappedIndex, 6);
+  });
 }

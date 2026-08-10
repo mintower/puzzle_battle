@@ -16,15 +16,17 @@ import 'result_screen.dart';
 
 /// Live race against a real opponent, synced through Firestore. Both
 /// clients build an identical [PuzzleSession] from the room's shared
-/// size/seed. Each move reports progress (correct-tile ratio + the full
-/// tile array, for the opponent's mini board preview) — still far cheaper
-/// than a dedicated realtime server.
+/// size/seed. Each move also reports the full tile array, so the
+/// opponent's progress row can show a small live read-only board preview
+/// — still far cheaper than a dedicated realtime server.
 ///
-/// Combo/attack: 3 consecutive moves that each raise your correct-tile
-/// count charge 1 attack. Firing an attack applies a few random moves to
-/// the opponent's board (detected via [OnlineRoom.attackCount] ticking up)
-/// — it costs nothing to sync since each side scrambles its own board
-/// locally rather than the attacker dictating exact tile positions.
+/// Attack gauge: completing one of the board's 4 quadrants charges 1
+/// attack (see [PuzzleSession.checkNewlyCompletedQuadrants]). Firing
+/// either sends a shuffle (scrambles a 2x2 window of the opponent's
+/// board) or a lock (freezes 1-2 of their misplaced tiles for 5 of their
+/// own moves) — detected via [OnlineRoom.shuffleAttacks]/[lockAttacks]
+/// ticking up, then applied locally by the target's own client, so no
+/// board-state sync is needed for the attack itself.
 class OnlineMatchScreen extends StatefulWidget {
   final String roomCode;
   final String myUid;
@@ -47,8 +49,7 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
   static const _heartbeatInterval = Duration(seconds: 5);
   static const _opponentTimeout = Duration(seconds: 12);
   static const _maxAttackCharges = 3;
-  static const _movesPerAttack = 3;
-  static const _comboPerCharge = 3;
+  static const _lockTurns = 5;
 
   final _repo = MatchRepository();
   final _random = Random();
@@ -60,7 +61,8 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
   Timer? _heartbeatTimer;
   bool _navigatedToResult = false;
   int _attackCharges = 0;
-  int _lastSeenAttackCount = 0;
+  int _lastSeenShuffleAttacks = 0;
+  int _lastSeenLockAttacks = 0;
 
   @override
   void initState() {
@@ -73,7 +75,9 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
 
     if (_session == null) {
       _session = PuzzleSession(size: room.size, seed: room.seed);
-      _lastSeenAttackCount = room.attackCount[widget.myUid] ?? 0;
+      _session!.checkNewlyCompletedQuadrants(); // establish the baseline
+      _lastSeenShuffleAttacks = room.shuffleAttacks[widget.myUid] ?? 0;
+      _lastSeenLockAttacks = room.lockAttacks[widget.myUid] ?? 0;
       _stopwatch.start();
       _tickTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
         if (!mounted) return;
@@ -85,7 +89,7 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
         _repo.sendHeartbeat(code: widget.roomCode, uid: widget.myUid);
       });
     } else {
-      _checkForIncomingAttack(room);
+      _checkForIncomingAttacks(room);
     }
 
     final opponentUid = room.opponentUidFor(widget.myUid);
@@ -96,20 +100,41 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
     }
   }
 
-  /// Reacts to [OnlineRoom.attackCount] going up since we last checked by
-  /// scrambling our own board — the attacker never dictates our exact
-  /// tiles, just how many disruption moves land.
-  void _checkForIncomingAttack(OnlineRoom room) {
+  /// Reacts to [OnlineRoom.shuffleAttacks]/[lockAttacks] going up since we
+  /// last checked by applying the corresponding effect to our own board —
+  /// the attacker never dictates our exact tiles, just that an attack of
+  /// a given type landed.
+  void _checkForIncomingAttacks(OnlineRoom room) {
     if (_navigatedToResult) return;
     final session = _session;
     if (session == null) return;
-    final myAttacks = room.attackCount[widget.myUid] ?? 0;
-    if (myAttacks <= _lastSeenAttackCount) return;
-    final delta = myAttacks - _lastSeenAttackCount;
-    _lastSeenAttackCount = myAttacks;
-    session.applyDisruption(delta * _movesPerAttack, _random);
-    setState(() {});
-    _reportProgress();
+
+    final shuffles = room.shuffleAttacks[widget.myUid] ?? 0;
+    final locks = room.lockAttacks[widget.myUid] ?? 0;
+    var changed = false;
+
+    if (shuffles > _lastSeenShuffleAttacks) {
+      final delta = shuffles - _lastSeenShuffleAttacks;
+      _lastSeenShuffleAttacks = shuffles;
+      for (var i = 0; i < delta; i++) {
+        session.applyShuffle(_random);
+      }
+      changed = true;
+    }
+    if (locks > _lastSeenLockAttacks) {
+      final delta = locks - _lastSeenLockAttacks;
+      _lastSeenLockAttacks = locks;
+      for (var i = 0; i < delta; i++) {
+        session.applyIncomingLock(_random, turns: _lockTurns);
+      }
+      changed = true;
+    }
+
+    if (changed) {
+      _grantChargesForCompletedQuadrants();
+      setState(() {});
+      _reportProgress();
+    }
   }
 
   /// Detects an opponent who left mid-match (closing a tab never gets a
@@ -129,17 +154,20 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
     }
   }
 
+  void _grantChargesForCompletedQuadrants() {
+    final newlyCompleted = _session!.checkNewlyCompletedQuadrants();
+    if (newlyCompleted <= 0) return;
+    _attackCharges =
+        min(_attackCharges + newlyCompleted, _maxAttackCharges);
+  }
+
   void _handleTileTap(int tileIndex) {
     final session = _session;
     if (session == null || _navigatedToResult) return;
     if (!session.tryMove(tileIndex)) return;
     SoundService.playMove();
 
-    if (session.combo > 0 &&
-        session.combo % _comboPerCharge == 0 &&
-        _attackCharges < _maxAttackCharges) {
-      _attackCharges++;
-    }
+    _grantChargesForCompletedQuadrants();
     setState(() {});
     _reportProgress();
 
@@ -148,12 +176,18 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
     }
   }
 
-  void _fireAttack() {
-    final room = _room;
-    final opponentUid = room?.opponentUidFor(widget.myUid);
+  void _fireShuffleAttack() {
+    final opponentUid = _room?.opponentUidFor(widget.myUid);
     if (_attackCharges <= 0 || opponentUid == null) return;
     setState(() => _attackCharges--);
-    _repo.sendAttack(code: widget.roomCode, targetUid: opponentUid);
+    _repo.sendShuffleAttack(code: widget.roomCode, targetUid: opponentUid);
+  }
+
+  void _fireLockAttack() {
+    final opponentUid = _room?.opponentUidFor(widget.myUid);
+    if (_attackCharges <= 0 || opponentUid == null) return;
+    setState(() => _attackCharges--);
+    _repo.sendLockAttack(code: widget.roomCode, targetUid: opponentUid);
   }
 
   void _reportProgress() {
@@ -203,6 +237,25 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
     _tickTimer?.cancel();
     _heartbeatTimer?.cancel();
     super.dispose();
+  }
+
+  Widget _quadrantIndicator(List<bool> status) {
+    Widget dot(bool done) => Container(
+          width: 9,
+          height: 9,
+          margin: const EdgeInsets.all(1),
+          decoration: BoxDecoration(
+            color: done ? Colors.green : Theme.of(context).colorScheme.outlineVariant,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        );
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Row(mainAxisSize: MainAxisSize.min, children: [dot(status[0]), dot(status[1])]),
+        Row(mainAxisSize: MainAxisSize.min, children: [dot(status[2]), dot(status[3])]),
+      ],
+    );
   }
 
   @override
@@ -275,28 +328,43 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
             ),
             const SizedBox(height: 16),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  '콤보 x${session.combo}  ·  이동 ${session.moveCount}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                _quadrantIndicator(session.quadrantStatus),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '구역 완성 시 공격 게이지 충전 · 이동 ${session.moveCount}',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
                 ),
-                Row(
-                  children: [
-                    for (var i = 0; i < _maxAttackCharges; i++)
-                      Icon(
-                        Icons.bolt,
-                        size: 20,
-                        color: i < _attackCharges
-                            ? Colors.orange
-                            : Theme.of(context).colorScheme.outlineVariant,
-                      ),
-                    const SizedBox(width: 8),
-                    FilledButton.tonal(
-                      onPressed: _attackCharges > 0 ? _fireAttack : null,
-                      child: const Text('공격!'),
-                    ),
-                  ],
+                for (var i = 0; i < _maxAttackCharges; i++)
+                  Icon(
+                    Icons.bolt,
+                    size: 20,
+                    color: i < _attackCharges
+                        ? Colors.orange
+                        : Theme.of(context).colorScheme.outlineVariant,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _attackCharges > 0 ? _fireShuffleAttack : null,
+                    icon: const Icon(Icons.shuffle),
+                    label: const Text('셔플 공격'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _attackCharges > 0 ? _fireLockAttack : null,
+                    icon: const Icon(Icons.lock),
+                    label: const Text('잠금 공격'),
+                  ),
                 ),
               ],
             ),
@@ -309,6 +377,7 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
                     board: session.board,
                     onTileTap: _handleTileTap,
                     tileStyle: widget.tileStyle,
+                    lockedTileValues: session.lockedTiles.keys.toSet(),
                   ),
                 ),
               ),
