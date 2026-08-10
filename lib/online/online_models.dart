@@ -9,11 +9,18 @@ class PlayerProgress {
   final bool finished;
   final DateTime? finishedAt;
 
+  /// The player's current board tiles, if they've reported at least one
+  /// move — lets the opponent render a live read-only mini board. `null`
+  /// before the first move (or for older rooms from before this field
+  /// existed).
+  final List<int>? tiles;
+
   const PlayerProgress({
     required this.correct,
     required this.total,
     required this.finished,
     this.finishedAt,
+    this.tiles,
   });
 
   double get ratio => total == 0 ? 0 : correct / total;
@@ -23,11 +30,15 @@ class PlayerProgress {
       return const PlayerProgress(correct: 0, total: 1, finished: false);
     }
     final finishedAt = map['finishedAt'];
+    final rawTiles = map['tiles'];
     return PlayerProgress(
       correct: (map['correct'] as num?)?.toInt() ?? 0,
       total: (map['total'] as num?)?.toInt() ?? 1,
       finished: map['finished'] as bool? ?? false,
       finishedAt: finishedAt is Timestamp ? finishedAt.toDate() : null,
+      tiles: rawTiles is List
+          ? rawTiles.map((t) => (t as num).toInt()).toList()
+          : null,
     );
   }
 }
@@ -59,6 +70,11 @@ class OnlineRoom {
   /// Which uids have voted to rematch for the *next* round.
   final Map<String, bool> rematchVotes;
 
+  /// Total attacks *received* by each uid so far (monotonically
+  /// increasing). A client compares this against the last count it's
+  /// already applied locally to detect and react to new incoming attacks.
+  final Map<String, int> attackCount;
+
   const OnlineRoom({
     required this.code,
     required this.size,
@@ -71,6 +87,7 @@ class OnlineRoom {
     required this.names,
     required this.round,
     required this.rematchVotes,
+    required this.attackCount,
   });
 
   bool get hasGuest => guestUid != null;
@@ -85,6 +102,7 @@ class OnlineRoom {
     final rawPresence = (data['presence'] as Map<String, dynamic>?) ?? const {};
     final rawNames = (data['names'] as Map<String, dynamic>?) ?? const {};
     final rawVotes = (data['rematchVotes'] as Map<String, dynamic>?) ?? const {};
+    final rawAttacks = (data['attackCount'] as Map<String, dynamic>?) ?? const {};
     return OnlineRoom(
       code: code,
       size: (data['size'] as num).toInt(),
@@ -107,6 +125,9 @@ class OnlineRoom {
       names: rawNames.map((uid, value) => MapEntry(uid, value as String)),
       round: (data['round'] as num?)?.toInt() ?? 0,
       rematchVotes: rawVotes.map((uid, value) => MapEntry(uid, value as bool)),
+      attackCount: rawAttacks.map(
+        (uid, value) => MapEntry(uid, (value as num).toInt()),
+      ),
     );
   }
 }

@@ -101,13 +101,7 @@ class _MatchScreenState extends State<MatchScreen> {
   }
 
   double _progressOf(PuzzleSession session) {
-    final tiles = session.board.tiles;
-    final total = tiles.length - 1;
-    var correct = 0;
-    for (var i = 0; i < total; i++) {
-      if (tiles[i] == i + 1) correct++;
-    }
-    return correct / total;
+    return session.board.correctTileCount / (session.board.tiles.length - 1);
   }
 
   @override

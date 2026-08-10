@@ -25,6 +25,16 @@ class PuzzleBoard {
     return true;
   }
 
+  /// How many tiles (excluding the blank) currently sit in their solved
+  /// position. Used for both the progress bars and combo tracking.
+  int get correctTileCount {
+    var correct = 0;
+    for (var i = 0; i < tiles.length - 1; i++) {
+      if (tiles[i] == i + 1) correct++;
+    }
+    return correct;
+  }
+
   /// Indices of tiles that are adjacent to the empty slot and can
   /// therefore legally slide into it.
   List<int> get availableMoves {

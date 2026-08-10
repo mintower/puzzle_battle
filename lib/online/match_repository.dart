@@ -101,14 +101,24 @@ class MatchRepository {
     required int correct,
     required int total,
     required bool finished,
+    required List<int> tiles,
   }) {
     return _rooms.doc(code).update({
       'progress.$uid': {
         'correct': correct,
         'total': total,
         'finished': finished,
+        'tiles': tiles,
         if (finished) 'finishedAt': FieldValue.serverTimestamp(),
       },
+    });
+  }
+
+  /// Sends one attack unit to [targetUid] — consumed the next time their
+  /// client observes [OnlineRoom.attackCount] increase.
+  Future<void> sendAttack({required String code, required String targetUid}) {
+    return _rooms.doc(code).update({
+      'attackCount.$targetUid': FieldValue.increment(1),
     });
   }
 

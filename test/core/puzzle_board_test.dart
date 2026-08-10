@@ -48,5 +48,12 @@ void main() {
       expect(a, b);
       expect(a, isNot(c));
     });
+
+    test('correctTileCount counts tiles in their solved position', () {
+      expect(PuzzleBoard.solved(3).correctTileCount, 8);
+      // Tiles 1..6 are in place; 7 and 8 are swapped with each other.
+      final board = PuzzleBoard(size: 3, tiles: [1, 2, 3, 4, 5, 6, 8, 7, 0]);
+      expect(board.correctTileCount, 6);
+    });
   });
 }

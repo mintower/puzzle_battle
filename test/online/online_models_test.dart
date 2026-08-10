@@ -32,6 +32,21 @@ void main() {
       expect(progress.finished, isTrue);
       expect(progress.finishedAt, timestamp.toDate());
     });
+
+    test('tiles is null when absent (older rooms, or before the first move)',
+        () {
+      expect(PlayerProgress.fromMap(null).tiles, isNull);
+      expect(PlayerProgress.fromMap({'correct': 0, 'total': 8}).tiles, isNull);
+    });
+
+    test('fromMap parses tiles for the opponent mini-board preview', () {
+      final progress = PlayerProgress.fromMap({
+        'correct': 1,
+        'total': 8,
+        'tiles': [1, 2, 3, 4, 5, 6, 7, 0, 8],
+      });
+      expect(progress.tiles, [1, 2, 3, 4, 5, 6, 7, 0, 8]);
+    });
   });
 
   group('OnlineRoom', () {
@@ -86,6 +101,22 @@ void main() {
       expect(room.nameFor('host-uid'), '민토');
       expect(room.nameFor('guest-uid'), '친구');
       expect(room.round, 2);
+    });
+
+    test('attackCount defaults to empty and parses when present', () {
+      expect(buildRoom(guestUid: 'guest-uid').attackCount, isEmpty);
+
+      final room = OnlineRoom.fromMap('1234', {
+        'size': 3,
+        'seed': 42,
+        'hostUid': 'host-uid',
+        'guestUid': 'guest-uid',
+        'status': 'active',
+        'progress': <String, dynamic>{},
+        'attackCount': {'guest-uid': 2},
+      });
+      expect(room.attackCount['guest-uid'], 2);
+      expect(room.attackCount['host-uid'], isNull);
     });
   });
 }
