@@ -88,6 +88,10 @@ class _OnlineMatchScreenState extends State<OnlineMatchScreen> {
       _heartbeatTimer = Timer.periodic(_heartbeatInterval, (_) {
         _repo.sendHeartbeat(code: widget.roomCode, uid: widget.myUid);
       });
+      // Report the starting board immediately (not just after the first
+      // move), so the opponent's mini board shows the real shuffled start
+      // instead of staying blank until they move.
+      _reportProgress();
     } else {
       _checkForIncomingAttacks(room);
     }
