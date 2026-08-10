@@ -16,7 +16,7 @@ class PuzzleBattleApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '슬라이딩 퍼즐 대전',
+      title: '15-puzzle vs.',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,

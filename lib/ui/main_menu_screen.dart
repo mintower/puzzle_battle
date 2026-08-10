@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../core/ai_opponent.dart';
 import '../core/nickname_service.dart';
-import 'board_view.dart';
-import 'match_screen.dart';
-import 'online_lobby_screen.dart';
-import 'practice_screen.dart';
+import 'custom_game_screen.dart';
+import 'game_setup_panel.dart';
 
 class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
@@ -15,16 +12,9 @@ class MainMenuScreen extends StatefulWidget {
 }
 
 class _MainMenuScreenState extends State<MainMenuScreen> {
-  int _boardSize = 3;
-  String _difficultyLabel = 'Medium';
-  TileStyle _tileStyle = TileStyle.numbers;
-  final _nicknameController = TextEditingController();
+  static const _defaultBoardSize = 4;
 
-  AiDifficultyProfile get _difficulty => switch (_difficultyLabel) {
-        'Easy' => AiDifficultyProfile.easy,
-        'Hard' => AiDifficultyProfile.hard,
-        _ => AiDifficultyProfile.medium,
-      };
+  final _nicknameController = TextEditingController();
 
   @override
   void initState() {
@@ -46,20 +36,10 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     return trimmed.isEmpty ? '플레이어' : trimmed;
   }
 
-  /// Scales the label down to fit its segment instead of wrapping or
-  /// clipping when the segment is narrower than the text (e.g. "어려움"
-  /// in a 3-way segmented button at phone width).
-  Widget _segmentLabel(String text) {
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      child: Text(text, softWrap: false),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('슬라이딩 퍼즐 대전')),
+      appBar: AppBar(title: const Text('15-puzzle vs.')),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 360),
@@ -80,82 +60,19 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   ),
                   onChanged: (value) => NicknameService.setNickname(value),
                 ),
-                const SizedBox(height: 16),
-                const Text('보드 크기', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                SegmentedButton<int>(
-                  showSelectedIcon: false,
-                  segments: [
-                    ButtonSegment(value: 3, label: _segmentLabel('3x3')),
-                    ButtonSegment(value: 4, label: _segmentLabel('4x4')),
-                    ButtonSegment(value: 5, label: _segmentLabel('5x5')),
-                  ],
-                  selected: {_boardSize},
-                  onSelectionChanged: (s) => setState(() => _boardSize = s.first),
-                ),
                 const SizedBox(height: 24),
-                const Text('타일 모양', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                SegmentedButton<TileStyle>(
-                  showSelectedIcon: false,
-                  segments: [
-                    ButtonSegment(value: TileStyle.numbers, label: _segmentLabel('숫자')),
-                    ButtonSegment(value: TileStyle.picture, label: _segmentLabel('그림')),
-                  ],
-                  selected: {_tileStyle},
-                  onSelectionChanged: (s) => setState(() => _tileStyle = s.first),
-                ),
-                const SizedBox(height: 24),
-                const Text('AI 난이도', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                SegmentedButton<String>(
-                  showSelectedIcon: false,
-                  segments: [
-                    ButtonSegment(value: 'Easy', label: _segmentLabel('쉬움')),
-                    ButtonSegment(value: 'Medium', label: _segmentLabel('보통')),
-                    ButtonSegment(value: 'Hard', label: _segmentLabel('어려움')),
-                  ],
-                  selected: {_difficultyLabel},
-                  onSelectionChanged: (s) =>
-                      setState(() => _difficultyLabel = s.first),
-                ),
-                const SizedBox(height: 32),
-                FilledButton(
-                  onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => MatchScreen(
-                        boardSize: _boardSize,
-                        difficulty: _difficulty,
-                        tileStyle: _tileStyle,
-                      ),
-                    ));
-                  },
-                  child: const Text('AI와 대전 시작'),
+                GameSetupPanel(
+                  boardSize: _defaultBoardSize,
+                  nickname: _nickname,
                 ),
                 const SizedBox(height: 12),
-                OutlinedButton(
+                TextButton(
                   onPressed: () {
                     Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => PracticeScreen(
-                        boardSize: _boardSize,
-                        tileStyle: _tileStyle,
-                      ),
+                      builder: (_) => CustomGameScreen(nickname: _nickname),
                     ));
                   },
-                  child: const Text('연습 모드 (혼자 풀기)'),
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton(
-                  onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => OnlineLobbyScreen(
-                        boardSize: _boardSize,
-                        tileStyle: _tileStyle,
-                        nickname: _nickname,
-                      ),
-                    ));
-                  },
-                  child: const Text('실시간 온라인 대전'),
+                  child: const Text('커스텀 게임 (3x3 / 5x5)'),
                 ),
               ],
             ),
