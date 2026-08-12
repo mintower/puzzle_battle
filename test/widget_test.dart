@@ -3,15 +3,27 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:puzzle_battle/main.dart';
 import 'package:puzzle_battle/ui/ai_setup_screen.dart';
+import 'package:puzzle_battle/ui/intro_screen.dart';
 import 'package:puzzle_battle/ui/match_screen.dart';
 import 'package:puzzle_battle/ui/practice_screen.dart';
+
+/// Pumps the app and taps past the intro screen (it advances automatically
+/// too, but tapping is instant and keeps these tests from depending on its
+/// auto-advance delay) so tests land on the main menu, as before the intro
+/// screen existed.
+Future<void> _pumpToMainMenu(WidgetTester tester) async {
+  await tester.pumpWidget(const PuzzleBattleApp());
+  await tester.tap(find.byType(IntroScreen));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
+}
 
 void main() {
   testWidgets(
       'Main menu renders nickname and the three ways to play, with AI '
       "difficulty tucked away behind the AI match button (not shown until "
       "you're inside it)", (tester) async {
-    await tester.pumpWidget(const PuzzleBattleApp());
+    await _pumpToMainMenu(tester);
 
     expect(find.text('닉네임'), findsOneWidget);
     expect(find.text('실시간 온라인 대전'), findsOneWidget);
@@ -23,7 +35,7 @@ void main() {
   testWidgets(
       'Tapping "AI와 대전 시작" opens the AI difficulty picker, and starting '
       'from there begins a 4x4 match', (tester) async {
-    await tester.pumpWidget(const PuzzleBattleApp());
+    await _pumpToMainMenu(tester);
     await tester.tap(find.text('AI와 대전 시작'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -59,7 +71,7 @@ void main() {
       'GameSetupPanel is built inline with the nickname baked in as a '
       'constructor param, so editing the field must trigger a rebuild or '
       'the typed name never reaches it)', (tester) async {
-    await tester.pumpWidget(const PuzzleBattleApp());
+    await _pumpToMainMenu(tester);
     await tester.enterText(find.byType(TextField), '민토');
     await tester.pump();
 
@@ -86,7 +98,10 @@ void main() {
 
   testWidgets('Tapping practice mode navigates to a solo board with no AI',
       (tester) async {
-    await tester.pumpWidget(const PuzzleBattleApp());
+    await _pumpToMainMenu(tester);
+    // The hero header (logo + title + tagline) pushes this button below
+    // the fold on the default test viewport — scroll it into view first.
+    await tester.ensureVisible(find.text('연습 모드 (혼자 풀기)'));
     await tester.tap(find.text('연습 모드 (혼자 풀기)'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));

@@ -69,7 +69,7 @@ class BoardView extends StatelessWidget {
                 padding: const EdgeInsets.all(3),
                 child: Material(
                   color: backgroundColor,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
                     onTap: (onTileTap == null || isLocked)
@@ -108,7 +108,10 @@ class BoardView extends StatelessWidget {
               Container(
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.6),
+                  ),
                 ),
               ),
               ...tiles,

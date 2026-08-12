@@ -2,7 +2,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'core/firebase_options.dart';
-import 'ui/main_menu_screen.dart';
+import 'ui/app_theme.dart';
+import 'ui/intro_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,11 +18,8 @@ class PuzzleBattleApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: '15-puzzle vs.',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-        useMaterial3: true,
-      ),
-      home: const MainMenuScreen(),
+      theme: AppTheme.light(),
+      home: const IntroScreen(),
     );
   }
 }

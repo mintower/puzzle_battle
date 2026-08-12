@@ -16,9 +16,12 @@ void main() {
     ));
 
     expect(find.text('승리!'), findsOneWidget);
-    expect(find.text('기록: 00:42'), findsOneWidget);
-    expect(find.text('내 이동 횟수: 10'), findsOneWidget);
-    expect(find.text('AI 이동 횟수: 15'), findsOneWidget);
+    expect(find.text('기록'), findsOneWidget);
+    expect(find.text('00:42'), findsOneWidget);
+    expect(find.text('내 이동 횟수'), findsOneWidget);
+    expect(find.text('10'), findsOneWidget);
+    expect(find.text('AI 이동 횟수'), findsOneWidget);
+    expect(find.text('15'), findsOneWidget);
   });
 
   testWidgets('ResultScreen shows a loss when the player did not win',
@@ -46,7 +49,8 @@ void main() {
     ));
 
     expect(find.text('완료!'), findsOneWidget);
-    expect(find.text('이동 횟수: 22'), findsOneWidget);
+    expect(find.text('이동 횟수'), findsOneWidget);
+    expect(find.text('22'), findsOneWidget);
     expect(find.textContaining('AI'), findsNothing);
   });
 
